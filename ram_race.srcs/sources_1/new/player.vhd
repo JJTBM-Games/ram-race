@@ -33,6 +33,7 @@ ENTITY player IS
 		up, down, left, right, neut  : IN std_logic;
 		clk                          : IN std_logic;
 		calc                         : IN std_logic;
+		true_pos                     : IN INTEGER;
 		pos                          : OUT INTEGER := 161;
 		old_pos                      : OUT INTEGER := 161
 	);
@@ -42,20 +43,20 @@ ARCHITECTURE Behavioral OF player IS
 	SIGNAL old_position : INTEGER := 1170;
 BEGIN
 	old_pos <= old_position;
-	pos <= position;
+	pos <= true_pos;
 	PROCESS (clk)
 	BEGIN
 		IF rising_edge(clk) THEN
 			IF (calc = '1') THEN
 				old_position <= position;
 				IF (up = '1') THEN
-					position <= (position - 40);
+					old_position <= (position - 40);
 				ELSIF (left = '1') THEN
-					position <= (position - 1);
+					old_position <= (position - 1);
 				ELSIF (right = '1') THEN
-					position <= (position + 1);
+					old_position <= (position + 1);
 				ELSIF (down = '1') THEN
-					position <= (position + 40);
+					old_position <= (position + 40);
 				END IF;
 			END IF;
 		END IF;

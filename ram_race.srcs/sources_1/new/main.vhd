@@ -59,7 +59,8 @@ COMPONENT display IS
            BLUE : out STD_LOGIC_VECTOR (0 TO 3);
            
            PLOC : in integer;
-           PLOC_old : in integer);
+           PLOC_old : in integer;
+           PLOC_handle : out integer);
 END COMPONENT display;
 
 COMPONENT player_entity IS
@@ -69,7 +70,8 @@ COMPONENT player_entity IS
 
 		clk                          : IN std_logic;
 		pos                          : OUT INTEGER := 161;
-		old_pos                      : OUT INTEGER := 161
+		old_pos                      : OUT INTEGER := 161;
+		true_pos                     : IN INTEGER
 	);
 END COMPONENT player_entity;
 
@@ -97,6 +99,7 @@ END COMPONENT clk_25;
 SIGNAL clk_25mhz : std_logic;
 SIGNAL position : INTEGER;
 SIGNAL position_old : INTEGER;
+SIGNAL accepted_POS : INTEGER;
 
 SIGNAL sup, sdown, sleft, sright, sneut  : std_logic;
 
@@ -114,7 +117,8 @@ D1 : display Port Map (CLK => clk_25mhz,
                        GREEN => GREEN,
                        BLUE => BLUE,
                        PLOC => position,
-                       PLOC_old => position_old);
+                       PLOC_old => position_old,
+                       PLOC_handle => accepted_POS);
 
 P1 : player_entity Port Map(up => sup, 
                             down => sdown, 
@@ -123,6 +127,7 @@ P1 : player_entity Port Map(up => sup,
                             neut => sneut,
                             clk  => clk,
                             pos => position,
+                            true_pos => accepted_POS,
                             old_pos => position_old);
 
 C1 : controls Port Map(Clk => clk,

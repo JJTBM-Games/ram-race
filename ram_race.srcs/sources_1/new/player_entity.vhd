@@ -31,6 +31,7 @@ ENTITY player_entity IS
 	(
 		up, down, left, right, neut  : IN std_logic;
 		clk                          : IN std_logic;
+		true_pos                     : IN INTEGER;
 		pos                          : OUT INTEGER := 161;
 		old_pos                      : OUT INTEGER := 161
 	);
@@ -44,6 +45,7 @@ ARCHITECTURE Behavioral OF player_entity IS
 			up, down, left, right, neut  : IN std_logic;
 			clk                          : IN std_logic;
 			calc                         : IN std_logic;
+		    true_pos                     : IN INTEGER;
 			pos                          : OUT INTEGER := 161;
 			old_pos                      : OUT INTEGER := 161
 		);
@@ -71,6 +73,7 @@ BEGIN
 		neut     => neut,
 		clk      => clk,
 		calc     => sCalculation,
+		true_pos => true_pos,
 		pos      => pos,
 		old_pos  => old_pos
 	);

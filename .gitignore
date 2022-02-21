@@ -1,6 +1,7 @@
 *
 !*/
 !ram_race.srcs/sources_1/new/**
+!ram_race.srcs/constrs_1/new/**
 !*.xpr
 !*.md
 !*.gitignore

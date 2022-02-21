@@ -43,7 +43,9 @@ entity display is
            BLUE : out STD_LOGIC_VECTOR (0 TO 3);
            
            PLOC : in integer;
-           PLOC_old : in integer);
+           PLOC_old : in integer;
+           
+           PLOC_handle : out integer);
 end display;
 
 architecture Behavioral of display is
@@ -74,6 +76,8 @@ COMPONENT grid_controller IS
            PLOC : in integer;
            PLOC_old : in integer;
            
+           PLOC_handle : out integer;
+           
            RGB_DATA : out STD_LOGIC_VECTOR (0 TO 11));
 END COMPONENT;
 
@@ -89,6 +93,7 @@ GC: grid_controller Port Map (clk => clk_board,
                                 vloc => vloc_buffer,
                                 PLOC => PLOC,
                                 PLOC_old => PLOC_old,
+                                PLOC_handle => PLOC_handle,
                                 RGB_DATA => RGB_DATA_BUFFER
 );
 
