@@ -17,19 +17,8 @@
 -- Additional Comments:
 -- 
 ----------------------------------------------------------------------------------
-
-
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
-
--- Uncomment the following library declaration if using
--- arithmetic functions with Signed or Unsigned values
---use IEEE.NUMERIC_STD.ALL;
-
--- Uncomment the following library declaration if instantiating
--- any Xilinx leaf cells in this code.
---library UNISIM;
---use UNISIM.VComponents.all;
 
 entity main is
     Port (clk : in STD_LOGIC;
@@ -58,8 +47,7 @@ COMPONENT display IS
            GREEN : out STD_LOGIC_VECTOR (0 TO 3);
            BLUE : out STD_LOGIC_VECTOR (0 TO 3);
            
-           PLOC : in integer;
-           PLOC_old : in integer);
+           go_up, go_down, go_left, go_right : IN std_logic);
 END COMPONENT display;
 
 COMPONENT player_entity IS
@@ -68,8 +56,7 @@ COMPONENT player_entity IS
 	            up, down, left, right, neut  : IN std_logic;
 
 		clk                          : IN std_logic;
-		pos                          : OUT INTEGER := 161;
-		old_pos                      : OUT INTEGER := 161
+		go_up, go_down, go_left, go_right : OUT std_logic
 	);
 END COMPONENT player_entity;
 
@@ -95,8 +82,7 @@ COMPONENT clk_25 IS
 END COMPONENT clk_25;
 
 SIGNAL clk_25mhz : std_logic;
-SIGNAL position : INTEGER;
-SIGNAL position_old : INTEGER;
+signal go_up_buff, go_down_buff, go_left_buff, go_right_buff : std_logic;
 
 SIGNAL sup, sdown, sleft, sright, sneut  : std_logic;
 
@@ -113,8 +99,10 @@ D1 : display Port Map (CLK => clk_25mhz,
                        RED => RED,
                        GREEN => GREEN,
                        BLUE => BLUE,
-                       PLOC => position,
-                       PLOC_old => position_old);
+                       go_up => go_up_buff,
+                       go_down => go_down_buff,
+                       go_left => go_left_buff,
+                       go_right => go_right_buff);
 
 P1 : player_entity Port Map(up => sup, 
                             down => sdown, 
@@ -122,8 +110,10 @@ P1 : player_entity Port Map(up => sup,
                             right => sright, 
                             neut => sneut,
                             clk  => clk,
-                            pos => position,
-                            old_pos => position_old);
+                            go_up => go_up_buff,
+                            go_down => go_down_buff,
+                            go_left => go_left_buff,
+                            go_right => go_right_buff);
 
 C1 : controls Port Map(Clk => clk,
                        JoystickLeft => jsleft,

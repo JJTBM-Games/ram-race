@@ -31,8 +31,7 @@ ENTITY player_entity IS
 	(
 		up, down, left, right, neut  : IN std_logic;
 		clk                          : IN std_logic;
-		pos                          : OUT INTEGER := 161;
-		old_pos                      : OUT INTEGER := 161
+		go_up, go_down, go_left, go_right : OUT std_logic
 	);
 END player_entity;
 
@@ -44,8 +43,7 @@ ARCHITECTURE Behavioral OF player_entity IS
 			up, down, left, right, neut  : IN std_logic;
 			clk                          : IN std_logic;
 			calc                         : IN std_logic;
-			pos                          : OUT INTEGER := 161;
-			old_pos                      : OUT INTEGER := 161
+			go_up, go_down, go_left, go_right : OUT std_logic
 		);
 	END COMPONENT player;
 	
@@ -71,8 +69,10 @@ BEGIN
 		neut     => neut,
 		clk      => clk,
 		calc     => sCalculation,
-		pos      => pos,
-		old_pos  => old_pos
+		go_up => go_up,
+		go_down => go_down,
+		go_left => go_left,
+		go_right => go_right
 	);
 	player_one_states : SM_player
 	PORT MAP

@@ -42,8 +42,7 @@ entity display is
            GREEN : out STD_LOGIC_VECTOR (0 TO 3);
            BLUE : out STD_LOGIC_VECTOR (0 TO 3);
            
-           PLOC : in integer;
-           PLOC_old : in integer);
+           go_up, go_down, go_left, go_right : IN std_logic);
 end display;
 
 architecture Behavioral of display is
@@ -71,8 +70,7 @@ COMPONENT grid_controller IS
            HLOC : in integer; 
            VLOC : in integer;
            
-           PLOC : in integer;
-           PLOC_old : in integer;
+           go_up, go_down, go_left, go_right : IN std_logic;
            
            RGB_DATA : out STD_LOGIC_VECTOR (0 TO 11));
 END COMPONENT;
@@ -87,9 +85,11 @@ begin
 GC: grid_controller Port Map (clk => clk_board,
                                 hloc => hloc_buffer,
                                 vloc => vloc_buffer,
-                                PLOC => PLOC,
-                                PLOC_old => PLOC_old,
-                                RGB_DATA => RGB_DATA_BUFFER
+                                RGB_DATA => RGB_DATA_BUFFER,
+                                go_up => go_up,
+                                go_down => go_down,
+                                go_left => go_left,
+                                go_right => go_right
 );
 
 VC: vga_controller Port Map (clk => clk,

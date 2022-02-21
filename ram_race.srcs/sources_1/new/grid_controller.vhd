@@ -5,16 +5,13 @@ use IEEE.MATH_REAL.ALL;
 --use IEEE.STD_LOGIC_ARITH.ALL;
 use IEEE.STD_LOGIC_UNSigned.ALL;
 
-
-
 entity grid_controller is
     Port ( CLK : in STD_LOGIC;
            
            HLOC : in integer; 
            VLOC : in integer;
            
-           PLOC : in integer;
-           PLOC_old : in integer;
+           go_up, go_down, go_left, go_right : IN std_logic;
            
            RGB_DATA : out STD_LOGIC_VECTOR (0 TO 11));
 end grid_controller;
@@ -39,7 +36,10 @@ architecture Behavioral of grid_controller is
     
     signal count : integer := 0;
     signal level_test_count : integer := 0;
- 
+
+    signal ploc : integer := 1130;       -- Starting position as default value for first level
+    signal allowed_up, allowed_down, allowed_right, allowed_left : std_logic;
+    
    signal DATA_level : STD_LOGIC_VECTOR( 31 downto 0 );
    signal addr_level : STD_LOGIC_VECTOR( 10 downto 0 ) := (others => '0');
    
@@ -251,13 +251,14 @@ begin
     end if;
 end process;
 
+-- TODO: Make seperate processer for every cellSpriteNumber down here
 current_cell_sprite : process(CLK)
 begin
     if (rising_edge(CLK)) then
         -- Determine the sprite of the current cell and it's RGB values using the current cell number (minus one because array starts at zero)
         addr_level <=  std_logic_vector(to_unsigned((cellNumber - 1), 11));
         cellSpriteNumber <= to_integer(unsigned(DATA_level));
-        
+      
         if (cellSpriteNumber = 0) then    -- White
             RGB_DATA <= "111111111111";
             
@@ -265,8 +266,18 @@ begin
             RGB_DATA <= "000000010101";
             
         elsif (cellSpriteNumber = 2) then -- Black
-            RGB_DATA <= "000000000000";
+            if (cellNumber = ploc - 40) then
+                allowed_up <= '0';
+            elsif (cellNumber = ploc + 40) then
+                allowed_down <= '0';
+            elsif (cellNumber = ploc - 1) then
+                allowed_left <= '0';
+            elsif (cellNumber = ploc + 1) then
+                allowed_right <= '0';
+            end if;
             
+            RGB_DATA <= "000000000000";
+
         elsif (cellSpriteNumber = 3) then -- Red
             RGB_DATA <= "110000010010";
             
@@ -277,13 +288,22 @@ begin
             RGB_DATA <= "000010011111";
             
         elsif (cellSpriteNumber = 6) then -- Floor
-            if (cellNumber = PLOC) then
+            if (cellNumber = ploc - 40) then
+                allowed_up <= '1';
+            elsif (cellNumber = ploc + 40) then
+                allowed_down <= '1';
+            elsif (cellNumber = ploc - 1) then
+                allowed_left <= '1';
+            elsif (cellNumber = ploc + 1) then
+                allowed_right <= '1';
+            end if;
+
+            if (cellNumber = ploc) then
                 player_one_addra <= std_logic_vector(to_unsigned((cellPixel - 1), 10));
                 RGB_DATA <= player_one_douta;
             else
                 RGB_DATA <= "000010000000"; -- Player is not on floor
             end if;
-            
         elsif (cellSpriteNumber = 7) then -- Letter L 
             L_sprite_addra <= std_logic_vector(to_unsigned((cellPixel - 1), 8));
             RGB_DATA <= L_sprite_douta;
@@ -311,6 +331,28 @@ begin
                 RGB_DATA <= three_sprite_douta;
             end if;
         end if;
+
+         if (go_up = '1') then
+                if (allowed_up = '1') then
+                    ploc <= ploc - 40;
+                    allowed_up <= '0';
+                end if;
+            elsif (go_down = '1') then
+                    if (allowed_down = '1') then
+                        ploc <= ploc + 40;
+                        allowed_down <= '0';
+                    end if;
+                elsif (go_left = '1') then
+                    if (allowed_left = '1') then
+                        ploc <= ploc - 1;
+                        allowed_left <= '0';
+                    end if;
+                elsif (go_right = '1') then
+                    if (allowed_right = '1') then
+                        ploc <= ploc + 1;
+                        allowed_right <= '0';
+                    end if;
+                end if;
     end if;
 end process;
 

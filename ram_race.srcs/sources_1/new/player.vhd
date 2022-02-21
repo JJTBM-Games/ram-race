@@ -19,44 +19,53 @@
 ----------------------------------------------------------------------------------
 LIBRARY IEEE;
 USE IEEE.STD_LOGIC_1164.ALL;
--- Uncomment the following library declaration if using
--- arithmetic functions with Signed or Unsigned values
 USE IEEE.NUMERIC_STD.ALL;
 USE IEEE.MATH_REAL.ALL;
--- Uncomment the following library declaration if instantiating
--- any Xilinx leaf cells in this code.
---library UNISIM;
---use UNISIM.VComponents.all;
+
 ENTITY player IS
 	PORT
 	(
 		up, down, left, right, neut  : IN std_logic;
 		clk                          : IN std_logic;
 		calc                         : IN std_logic;
-		pos                          : OUT INTEGER := 161;
-		old_pos                      : OUT INTEGER := 161
+		update_ploc                  : IN STD_LOGIC;
+		go_up, go_down, go_left, go_right : OUT std_logic
 	);
 END player;
+
 ARCHITECTURE Behavioral OF player IS
-	SIGNAL position : INTEGER := 1170;
-	SIGNAL old_position : INTEGER := 1170;
+	
 BEGIN
-	old_pos <= old_position;
-	pos <= position;
 	PROCESS (clk)
 	BEGIN
-		IF rising_edge(clk) THEN
+		IF rising_edge(clk) THEN  	
 			IF (calc = '1') THEN
-				old_position <= position;
 				IF (up = '1') THEN
-					position <= (position - 40);
+				    go_up <= '1';
+				    go_down <= '0';
+				    go_left <= '0';
+				    go_right <= '0';
 				ELSIF (left = '1') THEN
-					position <= (position - 1);
+				    go_up <= '0';
+				    go_down <= '0';
+				    go_left <= '1';
+				    go_right <= '0';
 				ELSIF (right = '1') THEN
-					position <= (position + 1);
+				    go_up <= '0';
+				    go_down <= '0';
+				    go_left <= '0';
+				    go_right <= '1';
 				ELSIF (down = '1') THEN
-					position <= (position + 40);
+				    go_up <= '0';
+				    go_down <= '1';
+				    go_left <= '0';
+				    go_right <= '0';
 				END IF;
+		    ELSE
+		      go_up <= '0';
+				    go_down <= '0';
+				    go_left <= '0';
+				    go_right <= '0';
 			END IF;
 		END IF;
 	END PROCESS;
