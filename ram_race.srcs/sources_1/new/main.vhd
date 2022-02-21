@@ -86,15 +86,15 @@ Port ( Clk              : in STD_LOGIC;
            Neutral : out STD_LOGIC);
 END COMPONENT controls;
 
-COMPONENT clk_108 IS
+COMPONENT clk_25 IS
         Port ( clk_in1 : in STD_LOGIC;
                reset : in STD_LOGIC;
                
                locked : out STD_LOGIC;
-               CLK_108MHz : out STD_LOGIC);
-END COMPONENT clk_108;
+               CLK_25MHz : out STD_LOGIC);
+END COMPONENT clk_25;
 
-SIGNAL clk_108mhz : std_logic;
+SIGNAL clk_25mhz : std_logic;
 SIGNAL position : INTEGER;
 SIGNAL position_old : INTEGER;
 
@@ -102,11 +102,11 @@ SIGNAL sup, sdown, sleft, sright, sneut  : std_logic;
 
 begin
 
-CD1 : clk_108 Port Map(clk_in1 => clk,
+CD1 : clk_25 Port Map(clk_in1 => clk,
                         reset => '0',
-                        clk_108mhz => clk_108mhz);
+                        clk_25mhz => clk_25mhz);
 
-D1 : display Port Map (CLK => clk_108mhz,
+D1 : display Port Map (CLK => clk_25mhz,
                        CLK_board => clk,
                        HSYNC =>  HSYNC,
                        VSYNC =>  VSYNC,
