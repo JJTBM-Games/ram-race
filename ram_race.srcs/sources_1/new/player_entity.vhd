@@ -1,59 +1,59 @@
-LIBRARY IEEE;
-USE IEEE.STD_LOGIC_1164.ALL;
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
 
-ENTITY player_entity IS
-	PORT
-	(
-		up, down, left, right, neut  : IN std_logic;
-		clk                          : IN std_logic;
-		go_up, go_down, go_left, go_right : OUT std_logic
-	);
-END player_entity;
+entity player_entity is
+    Port (  CLK : in STD_LOGIC;
+            P_GO_UP, P_GO_RIGHT, P_GO_DOWN, P_GO_LEFT, P_GO_NEUT : in STD_LOGIC;
+		
+		    P_UP, P_RIGHT, P_DOWN, P_LEFT : out STD_LOGIC);
+end player_entity;
 
-ARCHITECTURE Behavioral OF player_entity IS
+architecture Behavioral of player_entity is
+    
+	signal calc_buff : STD_LOGIC;
 
-	COMPONENT player IS
-		PORT
-		(
-			up, down, left, right, neut  : IN std_logic;
-			clk                          : IN std_logic;
-			calc                         : IN std_logic;
-			go_up, go_down, go_left, go_right : OUT std_logic
-		);
-	END COMPONENT player;
+	component player is
+	   Port (  CLK : in STD_LOGIC;
+            
+               CALC : in STD_LOGIC;
+               P_GO_UP, P_GO_RIGHT, P_GO_DOWN, P_GO_LEFT, P_GO_NEUT : in STD_LOGIC;
+                
+               P_UP, P_RIGHT, P_DOWN, P_LEFT : out STD_LOGIC);
+	end component player;
 	
-	COMPONENT SM_player IS
-		PORT
-		(
-			clk      : IN STD_LOGIC;
-			neutral  : IN STD_LOGIC;
-			calc     : OUT STD_LOGIC
-		);
-	END COMPONENT SM_player;
+	component player_state is
+	   Port (  CLK : in STD_LOGIC;
+	   
+			   P_GO_NEUT  : in STD_LOGIC;
+			   
+			   CALC     : out STD_LOGIC);
+	end component player_state;
+
+begin
+
+P : player port map (
+    CLK => CLK,
+
+    CALC => calc_buff,
+
+    P_GO_UP => P_GO_UP,
+    P_GO_RIGHT => P_GO_RIGHT,
+    P_GO_DOWN => P_GO_DOWN,
+    P_GO_LEFT => P_GO_LEFT,
+    P_GO_NEUT => P_GO_NEUT,
+  
+    P_UP => P_UP,
+	P_RIGHT => P_RIGHT,
+	P_DOWN => P_DOWN,
+	P_LEFT => P_LEFT
+);
 	
-	SIGNAL sCalculation : STD_LOGIC;
+PS : player_state port map (
+    CLK => CLK,
+    
+    P_GO_NEUT => P_GO_NEUT,
+    
+	CALC => calc_buff
+);
 
-BEGIN
-	player_one : player
-	PORT MAP
-	(
-		up       => up,
-		down     => down,
-		left     => left,
-		right    => right,
-		neut     => neut,
-		clk      => clk,
-		calc     => sCalculation,
-		go_up => go_up,
-		go_down => go_down,
-		go_left => go_left,
-		go_right => go_right
-	);
-	player_one_states : SM_player
-	PORT MAP
-	(
-		clk      => clk,
-		neutral  => neut,
-	    calc     => sCalculation);
-
-END Behavioral;
+end Behavioral;

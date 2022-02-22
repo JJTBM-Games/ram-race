@@ -10,7 +10,7 @@ entity grid_controller is
            HLOC : in integer; 
            VLOC : in integer;
            
-           go_up, go_down, go_left, go_right : IN STD_LOGIC;
+           P1_UP, P1_RIGHT, P1_DOWN, P1_LEFT : in STD_LOGIC;
            
            RGB_DATA : out STD_LOGIC_VECTOR (0 TO 11));
 end grid_controller;
@@ -123,14 +123,14 @@ architecture Behavioral of grid_controller is
     signal Player_one_addra : STD_LOGIC_VECTOR(9 DOWNTO 0);
     signal Player_one_douta : STD_LOGIC_VECTOR(11 DOWNTO 0);
     
-    COMPONENT player_one_sprite IS
-      PORT (
+    component player_one_sprite IS
+      Port (
         clka : IN STD_LOGIC;
         ena : IN STD_LOGIC;
         addra : IN STD_LOGIC_VECTOR(9 DOWNTO 0);
         douta : OUT STD_LOGIC_VECTOR(11 DOWNTO 0)
       );
-    END COMPONENT player_one_sprite;
+    end component player_one_sprite;
 begin
 
 L_sprite_map : L_sprite port map (
@@ -248,7 +248,6 @@ begin
     end if;
 end process;
 
--- TODO: Make seperate processer for every cellSpriteNumber down here
 current_cell_sprite : process(CLK)
 begin
     if (rising_edge(CLK)) then
@@ -260,6 +259,16 @@ begin
             RGB_DATA <= "111111111111";
             
         elsif (cellSpriteNumber = 1) then -- Dark blue
+            if (cellNumber = ploc - 40) then
+                allowed_up <= '0';
+            elsif (cellNumber = ploc + 40) then
+                allowed_down <= '0';
+            elsif (cellNumber = ploc - 1) then
+                allowed_left <= '0';
+            elsif (cellNumber = ploc + 1) then
+                allowed_right <= '0';
+            end if;
+        
             RGB_DATA <= "000000010101";
             
         elsif (cellSpriteNumber = 2) then -- Black
@@ -329,27 +338,27 @@ begin
             end if;
         end if;
 
-         if (go_up = '1') then
-                if (allowed_up = '1') then
-                    ploc <= ploc - 40;
-                    allowed_up <= '0';
-                end if;
-            elsif (go_down = '1') then
-                    if (allowed_down = '1') then
-                        ploc <= ploc + 40;
-                        allowed_down <= '0';
-                    end if;
-                elsif (go_left = '1') then
-                    if (allowed_left = '1') then
-                        ploc <= ploc - 1;
-                        allowed_left <= '0';
-                    end if;
-                elsif (go_right = '1') then
-                    if (allowed_right = '1') then
-                        ploc <= ploc + 1;
-                        allowed_right <= '0';
-                    end if;
-                end if;
+        if (P1_UP = '1') then
+            if (allowed_up = '1') then
+                ploc <= ploc - 40;
+                allowed_up <= '0';
+            end if;
+        elsif (P1_RIGHT = '1') then
+            if (allowed_down = '1') then
+                ploc <= ploc + 1;
+                allowed_right <= '0';
+            end if;
+        elsif (P1_DOWN = '1') then
+            if (allowed_down = '1') then
+                ploc <= ploc + 40;
+                allowed_down <= '0';
+            end if;
+        elsif (P1_LEFT = '1') then
+            if (allowed_right = '1') then
+                ploc <= ploc - 1;
+                allowed_left <= '0';
+            end if;
+        end if;
     end if;
 end process;
 

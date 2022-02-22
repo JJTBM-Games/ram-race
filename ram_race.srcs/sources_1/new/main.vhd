@@ -54,10 +54,10 @@ architecture Behavioral of main is
     end component controls;
 
     component player_entity is
-        Port (  up, down, left, right, neut : in STD_LOGIC;
-                
-		        clk : in STD_LOGIC;
-		        go_up, go_down, go_left, go_right : out STD_LOGIC);
+        Port (  CLK : in STD_LOGIC;
+                P_GO_UP, P_GO_RIGHT, P_GO_DOWN, P_GO_LEFT, P_GO_NEUT : in STD_LOGIC;
+            
+                P_UP, P_RIGHT, P_DOWN, P_LEFT : out STD_LOGIC);
     end component player_entity;
     
     component display is   
@@ -98,6 +98,7 @@ C1 : controls port map (
     P_GO_NEUT => c1_neut_buff
 );
 
+-- Port map for the player 2 controls
 --C2 : controls port map (
 --    CLK => CLK_100,
     
@@ -106,27 +107,43 @@ C1 : controls port map (
 --    JS_DOWN => JS2_DOWN,
 --    JS_LEFT => JS2_LEFT,
     
---    Left => sleft,
---    Right => sright,
---    Up => sup,
---    Down => sdown,
---    Neutral => sneut
+--    P_GO_UP => c2_up_buff,
+--    P_GO_RIGHT => c2_right_buff,
+--    P_GO_DOWN => c2_down_buff,
+--    P_GO_LEFT => c2_left_buff,
+--    P_GO_NEUT => c2_neut_buff
 --);
 
 P1 : player_entity port map (
-    clk  => CLK_100,
+    CLK  => CLK_100,
     
-    up => c1_up_buff, 
-    right => c1_right_buff, 
-    down => c1_down_buff, 
-    left => c1_left_buff,  
-    neut => c1_neut_buff,
+    P_GO_UP => c1_up_buff, 
+    P_GO_RIGHT => c1_right_buff, 
+    P_GO_DOWN => c1_down_buff, 
+    P_GO_LEFT => c1_left_buff,  
+    P_GO_NEUT => c1_neut_buff,
     
-    go_up => p1_up_buff,
-    go_right => p1_right_buff,
-    go_down => p1_down_buff,
-    go_left => p1_left_buff
+    P_UP => p1_up_buff,
+    P_RIGHT => p1_right_buff,
+    P_DOWN => p1_down_buff,
+    P_LEFT => p1_left_buff
 );
+
+-- Port map for the player 2
+--P2 : player_entity port map (
+--    CLK  => CLK_100,
+    
+--    P_GO_UP => c2_up_buff, 
+--    P_GO_RIGHT => c2_right_buff, 
+--    P_GO_DOWN => c2_down_buff, 
+--    P_GO_LEFT => c2_left_buff,  
+--    P_GO_NEUT => c2_neut_buff,
+    
+--    P_UP => p2_up_buff,
+--    P_RIGHT => p2_right_buff,
+--    P_DOWN => p2_down_buff,
+--    P_LEFT => p2_left_buff
+--);
 
 D1 : display port map (
     CLK_100 => CLK_100,

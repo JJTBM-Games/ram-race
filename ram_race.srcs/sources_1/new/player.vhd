@@ -1,72 +1,58 @@
-----------------------------------------------------------------------------------
--- Company: JJTBM-games
--- Engineer: Tim Laheij
---
--- Create Date: 08.02.2022 10:52:34
--- Design Name:
--- Module Name: player - Behavioral
--- Project Name:
--- Target Devices:
--- Tool Versions:
--- Description:
---
--- Dependencies:
---
--- Revision:
--- Revision 0.01 - File Created
--- Additional Comments:
---
-----------------------------------------------------------------------------------
-LIBRARY IEEE;
-USE IEEE.STD_LOGIC_1164.ALL;
-USE IEEE.NUMERIC_STD.ALL;
-USE IEEE.MATH_REAL.ALL;
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+use IEEE.NUMERIC_STD.ALL;
+use IEEE.MATH_REAL.ALL;
 
-ENTITY player IS
-	PORT
-	(
-		up, down, left, right, neut  : IN std_logic;
-		clk                          : IN std_logic;
-		calc                         : IN std_logic;
-		update_ploc                  : IN STD_LOGIC;
-		go_up, go_down, go_left, go_right : OUT std_logic
-	);
-END player;
+entity player is
+    Port (  CLK : in STD_LOGIC;
+            
+            CALC : in STD_LOGIC;
+            P_GO_UP, P_GO_RIGHT, P_GO_DOWN, P_GO_LEFT, P_GO_NEUT : in STD_LOGIC;
+		    
+		    P_UP, P_RIGHT, P_DOWN, P_LEFT : out STD_LOGIC);
+end player;
 
-ARCHITECTURE Behavioral OF player IS
+architecture Behavioral of player is
 	
-BEGIN
-	PROCESS (clk)
-	BEGIN
-		IF rising_edge(clk) THEN  	
-			IF (calc = '1') THEN
-				IF (up = '1') THEN
-				    go_up <= '1';
-				    go_down <= '0';
-				    go_left <= '0';
-				    go_right <= '0';
-				ELSIF (left = '1') THEN
-				    go_up <= '0';
-				    go_down <= '0';
-				    go_left <= '1';
-				    go_right <= '0';
-				ELSIF (right = '1') THEN
-				    go_up <= '0';
-				    go_down <= '0';
-				    go_left <= '0';
-				    go_right <= '1';
-				ELSIF (down = '1') THEN
-				    go_up <= '0';
-				    go_down <= '1';
-				    go_left <= '0';
-				    go_right <= '0';
-				END IF;
-		    ELSE
-		      go_up <= '0';
-				    go_down <= '0';
-				    go_left <= '0';
-				    go_right <= '0';
-			END IF;
-		END IF;
-	END PROCESS;
-END Behavioral;
+begin
+    
+calculate_direction : process (CLK)
+begin
+    if rising_edge(CLK) then  	
+        if (calc = '1') then
+            if (P_GO_UP = '1') then
+                P_UP <= '1';
+				P_RIGHT <= '0';
+				P_DOWN <= '0';
+				P_DOWN <= '0';
+			elsif (P_GO_RIGHT = '1') then
+                P_UP <= '0';
+				P_RIGHT <= '1';
+				P_DOWN <= '0';
+				P_LEFT <= '0';
+			elsif (P_GO_DOWN = '1') then
+				P_UP <= '0';
+				P_RIGHT <= '0';
+				P_DOWN <= '1';
+				P_LEFT <= '0';
+			elsif (P_GO_LEFT = '1') then
+				P_UP <= '0';
+				P_RIGHT <= '0';
+				P_DOWN <= '0';
+				P_LEFT <= '1';
+			elsif (P_GO_NEUT = '1') then
+			    P_UP <= '0';
+				P_RIGHT <= '0';
+				P_DOWN <= '0';
+				P_LEFT <= '0';
+			end if;
+		else
+		    P_UP <= '0';
+		    P_RIGHT <= '0';
+			P_DOWN <= '0';
+			P_LEFT <= '0';
+		end if;
+	end if;
+end process calculate_direction;
+	
+end Behavioral;
