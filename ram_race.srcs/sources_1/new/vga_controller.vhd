@@ -1,24 +1,3 @@
-----------------------------------------------------------------------------------
--- Company: JJTBM Games
--- Engineer: Joas Onvlee
--- 
--- Create Date: 02/03/2022 07:22:02 PM
--- Design Name: 
--- Module Name: vga_controller - Behavioral
--- Project Name: POC Grid
--- Target Devices: 
--- Tool Versions: 
--- Description: Proof of concept for grid
--- 
--- Dependencies: 
--- 
--- Revision:
--- Revision 0.01 - File Created
--- Additional Comments:
--- 
-----------------------------------------------------------------------------------
-
-
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.NUMERIC_STD.ALL;
@@ -129,7 +108,7 @@ begin
 end process;
 
 -- Handles RGB values send to screen
-color_handler : process(CLK, vis)
+color_handler : process(CLK, RGB_DATA, vis)
 begin
     if (vis = '1') then
         -- These are the right RGB indexes, pls don't change it will fuck up the colors

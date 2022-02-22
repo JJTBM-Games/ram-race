@@ -2,7 +2,6 @@ library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.NUMERIC_STD.ALL;
 use IEEE.MATH_REAL.ALL;
---use IEEE.STD_LOGIC_ARITH.ALL;
 use IEEE.STD_LOGIC_UNSigned.ALL;
 
 entity grid_controller is
@@ -11,21 +10,21 @@ entity grid_controller is
            HLOC : in integer; 
            VLOC : in integer;
            
-           go_up, go_down, go_left, go_right : IN std_logic;
+           go_up, go_down, go_left, go_right : IN STD_LOGIC;
            
            RGB_DATA : out STD_LOGIC_VECTOR (0 TO 11));
 end grid_controller;
 
 architecture Behavioral of grid_controller is
 
-    constant HD : integer := 640;      -- Horizontal display (1280 pixels) 
-    constant VD : integer := 480;      -- Vertical display (1024 pixels)
+    constant HD : integer := 640;      -- Horizontal display (640 pixels) 
+    constant VD : integer := 480;      -- Vertical display (480 pixels)
 
     constant CELL_WIDTH : integer := 16;
     constant CELL_HEIGHT : integer := 16;
     
     constant CELL_X_AMOUNT : integer := HD / CELL_WIDTH;    -- Should result in 40
-    constant CELL_Y_AMOUNT : integer := VD / CELL_HEIGHT;   -- Should result in 32
+    constant CELL_Y_AMOUNT : integer := VD / CELL_HEIGHT;   -- Should result in 30
     
     signal cellX : integer := 0;
     signal cellY : integer := 0;
@@ -40,26 +39,25 @@ architecture Behavioral of grid_controller is
     signal ploc : integer := 1130;       -- Starting position as default value for first level
     signal allowed_up, allowed_down, allowed_right, allowed_left : std_logic;
     
-   signal DATA_level : STD_LOGIC_VECTOR( 31 downto 0 );
-   signal addr_level : STD_LOGIC_VECTOR( 10 downto 0 ) := (others => '0');
+    signal DATA_level : STD_LOGIC_VECTOR( 31 downto 0 );
+    signal addr_level : STD_LOGIC_VECTOR( 10 downto 0 ) := (others => '0');
    
     component level is
-            PORT (
+            port (
                 clka : IN STD_LOGIC;
                 ena : IN STD_LOGIC;
                 addra : IN STD_LOGIC_VECTOR(10 DOWNTO 0);
-                douta : OUT STD_LOGIC_VECTOR(31 DOWNTO 0)
-              );    
+                douta : OUT STD_LOGIC_VECTOR(31 DOWNTO 0));    
     end component level;
     
     signal L_sprite_addra : STD_LOGIC_VECTOR(7 DOWNTO 0);
     signal L_sprite_douta : STD_LOGIC_VECTOR(11 DOWNTO 0);
     
     component L_sprite is
-        Port ( clka : IN STD_LOGIC;
-               ena : IN STD_LOGIC;
-               addra : IN STD_LOGIC_VECTOR(7 DOWNTO 0);
-               douta : OUT STD_LOGIC_VECTOR(11 DOWNTO 0));
+        Port (  clka : IN STD_LOGIC;
+                ena : IN STD_LOGIC;
+                addra : IN STD_LOGIC_VECTOR(7 DOWNTO 0);
+                douta : OUT STD_LOGIC_VECTOR(11 DOWNTO 0));
     end component;
     
     signal E_sprite_addra : STD_LOGIC_VECTOR(7 DOWNTO 0);
@@ -190,7 +188,6 @@ three_sprite_map : three_sprite port map (
     addra => three_sprite_addra,
     douta => three_sprite_douta
 );
-
 
 level_one : level port map(
     clka => CLK,

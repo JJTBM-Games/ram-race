@@ -1,48 +1,18 @@
-----------------------------------------------------------------------------------
--- Company: 
--- Engineer: 
--- 
--- Create Date: 09.02.2022 15:45:08
--- Design Name: 
--- Module Name: display - Behavioral
--- Project Name: 
--- Target Devices: 
--- Tool Versions: 
--- Description: 
--- 
--- Dependencies: 
--- 
--- Revision:
--- Revision 0.01 - File Created
--- Additional Comments:
--- 
-----------------------------------------------------------------------------------
-
-
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 
--- Uncomment the following library declaration if using
--- arithmetic functions with Signed or Unsigned values
---use IEEE.NUMERIC_STD.ALL;
-
--- Uncomment the following library declaration if instantiating
--- any Xilinx leaf cells in this code.
---library UNISIM;
---use UNISIM.VComponents.all;
-
 entity display is
- Port (    CLK : in STD_LOGIC;
-           CLK_board : in STD_LOGIC;
-    
-           HSYNC : out STD_LOGIC;  
-           VSYNC : out STD_LOGIC;
-            
-           RED : out STD_LOGIC_VECTOR (0 TO 3); 
-           GREEN : out STD_LOGIC_VECTOR (0 TO 3);
-           BLUE : out STD_LOGIC_VECTOR (0 TO 3);
+    Port (  CLK_100 : in STD_LOGIC;
+            CLK_25 : in STD_LOGIC;
            
-           go_up, go_down, go_left, go_right : IN std_logic);
+            P1_UP, P1_RIGHT, P1_DOWN, P1_LEFT : IN STD_LOGIC;
+    
+            HSYNC : out STD_LOGIC;  
+            VSYNC : out STD_LOGIC;
+            
+            RED : out STD_LOGIC_VECTOR (0 TO 3); 
+            GREEN : out STD_LOGIC_VECTOR (0 TO 3);
+            BLUE : out STD_LOGIC_VECTOR (0 TO 3));
 end display;
 
 architecture Behavioral of display is
@@ -82,17 +52,18 @@ END COMPONENT;
     
 begin
 
-GC: grid_controller Port Map (clk => clk_board,
+GC: grid_controller Port Map (clk => CLK_100,
                                 hloc => hloc_buffer,
                                 vloc => vloc_buffer,
                                 RGB_DATA => RGB_DATA_BUFFER,
-                                go_up => go_up,
-                                go_down => go_down,
-                                go_left => go_left,
-                                go_right => go_right
+                                
+                                go_up => P1_UP,
+                                go_right => P1_RIGHT,
+                                go_down => P1_DOWN,
+                                go_left => P1_LEFT
 );
 
-VC: vga_controller Port Map (clk => clk,
+VC: vga_controller Port Map (clk => CLK_25,
                                 RGB_DATA => RGB_DATA_BUFFER,
                                 HSYNC => HSYNC,
                                 VSYNC => VSYNC,
