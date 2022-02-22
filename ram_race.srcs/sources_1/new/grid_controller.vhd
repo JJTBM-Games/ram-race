@@ -36,8 +36,8 @@ architecture Behavioral of grid_controller is
     signal count : integer := 0;
     signal level_test_count : integer := 0;
 
-    signal ploc : integer := 1130;       -- Starting position as default value for first level
-    signal allowed_up, allowed_down, allowed_right, allowed_left : std_logic;
+    signal p1_loc : integer := 1130;       -- Starting position as default value for first level
+    signal p1_allowed_up, p1_allowed_down, p1_allowed_right, p1_allowed_left : std_logic;
     
     signal DATA_level : STD_LOGIC_VECTOR( 31 downto 0 );
     signal addr_level : STD_LOGIC_VECTOR( 10 downto 0 ) := (others => '0');
@@ -259,27 +259,27 @@ begin
             RGB_DATA <= "111111111111";
             
         elsif (cellSpriteNumber = 1) then -- Dark blue
-            if (cellNumber = ploc - 40) then
-                allowed_up <= '0';
-            elsif (cellNumber = ploc + 40) then
-                allowed_down <= '0';
-            elsif (cellNumber = ploc - 1) then
-                allowed_left <= '0';
-            elsif (cellNumber = ploc + 1) then
-                allowed_right <= '0';
+            if (cellNumber = p1_loc - 40) then
+                p1_allowed_up <= '0';
+            elsif (cellNumber = p1_loc + 40) then
+                p1_allowed_down <= '0';
+            elsif (cellNumber = p1_loc - 1) then
+                p1_allowed_left <= '0';
+            elsif (cellNumber = p1_loc + 1) then
+                p1_allowed_right <= '0';
             end if;
         
             RGB_DATA <= "000000010101";
             
         elsif (cellSpriteNumber = 2) then -- Black
-            if (cellNumber = ploc - 40) then
-                allowed_up <= '0';
-            elsif (cellNumber = ploc + 40) then
-                allowed_down <= '0';
-            elsif (cellNumber = ploc - 1) then
-                allowed_left <= '0';
-            elsif (cellNumber = ploc + 1) then
-                allowed_right <= '0';
+            if (cellNumber = p1_loc - 40) then
+                p1_allowed_up <= '0';
+            elsif (cellNumber = p1_loc + 40) then
+                p1_allowed_down <= '0';
+            elsif (cellNumber = p1_loc - 1) then
+                p1_allowed_left <= '0';
+            elsif (cellNumber = p1_loc + 1) then
+                p1_allowed_right <= '0';
             end if;
             
             RGB_DATA <= "000000000000";
@@ -294,17 +294,17 @@ begin
             RGB_DATA <= "000010011111";
             
         elsif (cellSpriteNumber = 6) then -- Floor
-            if (cellNumber = ploc - 40) then
-                allowed_up <= '1';
-            elsif (cellNumber = ploc + 40) then
-                allowed_down <= '1';
-            elsif (cellNumber = ploc - 1) then
-                allowed_left <= '1';
-            elsif (cellNumber = ploc + 1) then
-                allowed_right <= '1';
+            if (cellNumber = p1_loc - 40) then
+                p1_allowed_up <= '1';
+            elsif (cellNumber = p1_loc + 40) then
+                p1_allowed_down <= '1';
+            elsif (cellNumber = p1_loc - 1) then
+                p1_allowed_left <= '1';
+            elsif (cellNumber = p1_loc + 1) then
+                p1_allowed_right <= '1';
             end if;
 
-            if (cellNumber = ploc) then
+            if (cellNumber = p1_loc) then
                 player_one_addra <= std_logic_vector(to_unsigned((cellPixel - 1), 10));
                 RGB_DATA <= player_one_douta;
             else
@@ -339,24 +339,24 @@ begin
         end if;
 
         if (P1_UP = '1') then
-            if (allowed_up = '1') then
-                ploc <= ploc - 40;
-                allowed_up <= '0';
+            if (p1_allowed_up = '1') then
+                p1_loc <= p1_loc - 40;
+                p1_allowed_up <= '0';
             end if;
         elsif (P1_RIGHT = '1') then
-            if (allowed_down = '1') then
-                ploc <= ploc + 1;
-                allowed_right <= '0';
+            if (p1_allowed_right = '1') then
+                p1_loc <= p1_loc + 1;
+                p1_allowed_right <= '0';
             end if;
         elsif (P1_DOWN = '1') then
-            if (allowed_down = '1') then
-                ploc <= ploc + 40;
-                allowed_down <= '0';
+            if (p1_allowed_down = '1') then
+                p1_loc <= p1_loc + 40;
+                p1_allowed_down <= '0';
             end if;
         elsif (P1_LEFT = '1') then
-            if (allowed_right = '1') then
-                ploc <= ploc - 1;
-                allowed_left <= '0';
+            if (p1_allowed_left = '1') then
+                p1_loc <= p1_loc - 1;
+                p1_allowed_left <= '0';
             end if;
         end if;
     end if;
