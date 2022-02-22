@@ -18,7 +18,7 @@ end controls;
 
 architecture Behavioral of controls is
 
-    component joystick_fetcher is
+    component joystick_controller is
         Port (  CLK : in STD_LOGIC;
             
                 JS_UP : in STD_LOGIC;
@@ -31,13 +31,13 @@ architecture Behavioral of controls is
                 P_GO_DOWN : out STD_LOGIC;
                 P_GO_LEFT : out STD_LOGIC;
                 P_GO_NEUT : out STD_LOGIC);
-    end component joystick_fetcher;
+    end component joystick_controller;
 
     -- Down here should be the button controller later on
 
 begin
 
-JF : joystick_fetcher port map (
+JC : joystick_controller port map (
     CLK => CLK,
 
     JS_UP => JS_UP,

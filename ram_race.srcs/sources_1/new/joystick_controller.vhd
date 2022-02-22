@@ -1,7 +1,7 @@
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 
-entity joystick_fetcher is 
+entity joystick_controller is 
     Port (  CLK : in STD_LOGIC;
             
             JS_UP : in STD_LOGIC;
@@ -14,9 +14,9 @@ entity joystick_fetcher is
             P_GO_DOWN : out STD_LOGIC;
             P_GO_LEFT : out STD_LOGIC;
             P_GO_NEUT : out STD_LOGIC);
-end joystick_fetcher;
+end joystick_controller;
 
-architecture Behavioral of joystick_fetcher is
+architecture Behavioral of joystick_controller is
 
     signal count : integer;
     signal direction : STD_LOGIC_VECTOR (2 DOWNTO 0);
