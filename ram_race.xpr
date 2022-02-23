@@ -3,7 +3,7 @@
 <!--                                                         -->
 <!-- Copyright 1986-2019 Xilinx, Inc. All Rights Reserved.   -->
 
-<Project Version="7" Minor="40" Path="C:/Users/joaso/Documents/VivadoProjects/ram-race/ram_race.xpr">
+<Project Version="7" Minor="40" Path="C:/Users/timla/OneDrive/Documenten/GitHub/ram-race/ram_race.xpr">
   <DefaultLaunch Dir="$PRUNDIR"/>
   <Configuration>
     <Option Name="Id" Val="24240f43e2a84495b9215f0cde051694"/>
@@ -116,55 +116,55 @@
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/../../School/Avans/Vakken/Project/Retro Game/coefiles/l16.coe">
+      <File Path="$PPRDIR/../../../../../../coefiles/l16.coe">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/../../School/Avans/Vakken/Project/Retro Game/coefiles/e16.coe">
+      <File Path="$PPRDIR/../../../../../../coefiles/e16.coe">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/../../School/Avans/Vakken/Project/Retro Game/coefiles/v16.coe">
+      <File Path="$PPRDIR/../../../../../../coefiles/v16.coe">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/../../School/Avans/Vakken/Project/Retro Game/coefiles/016.coe">
+      <File Path="$PPRDIR/../../../../../../coefiles/016.coe">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/../../School/Avans/Vakken/Project/Retro Game/coefiles/116.coe">
+      <File Path="$PPRDIR/../../../../../../coefiles/116.coe">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/../../School/Avans/Vakken/Project/Retro Game/coefiles/216.coe">
+      <File Path="$PPRDIR/../../../../../../coefiles/216.coe">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/../../School/Avans/Vakken/Project/Retro Game/coefiles/316.coe">
+      <File Path="$PPRDIR/../../../../../../coefiles/316.coe">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/../../School/Avans/Vakken/Project/Retro Game/coefiles/level.coe">
+      <File Path="$PPRDIR/../../../../../../coefiles/leveltest.coe">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/../../School/Avans/Vakken/Project/Retro Game/coefiles/player_one.coe">
+      <File Path="$PPRDIR/../../../../../../coefiles/player_one.coe">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="simulation"/>
@@ -178,16 +178,14 @@
     </FileSet>
     <FileSet Name="constrs_1" Type="Constrs" RelSrcDir="$PSRCDIR/constrs_1">
       <Filter Type="Constrs"/>
-      <File Path="$PSRCDIR/constrs_1/imports/Downloads/top.xdc">
+      <File Path="$PSRCDIR/top.xdc">
         <FileInfo>
-          <Attr Name="ImportPath" Val="$PPRDIR/../../../Downloads/top.xdc"/>
-          <Attr Name="ImportTime" Val="1645453171"/>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="implementation"/>
         </FileInfo>
       </File>
       <Config>
-        <Option Name="TargetConstrsFile" Val="$PSRCDIR/constrs_1/imports/Downloads/top.xdc"/>
+        <Option Name="TargetConstrsFile" Val="$PSRCDIR/top.xdc"/>
         <Option Name="ConstrsType" Val="XDC"/>
       </Config>
     </FileSet>

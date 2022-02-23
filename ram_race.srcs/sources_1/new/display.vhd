@@ -6,7 +6,8 @@ entity display is
             CLK_25 : in STD_LOGIC;
            
             P1_UP, P1_RIGHT, P1_DOWN, P1_LEFT : in STD_LOGIC;
-    
+            P2_UP, P2_RIGHT, P2_DOWN, P2_LEFT : in STD_LOGIC;
+
             HSYNC : out STD_LOGIC;  
             VSYNC : out STD_LOGIC;
             
@@ -29,7 +30,8 @@ architecture Behavioral of display is
                VLOC : in integer;
                
                P1_UP, P1_RIGHT, P1_DOWN, P1_LEFT : in STD_LOGIC;
-               
+               P2_UP, P2_RIGHT, P2_DOWN, P2_LEFT : in STD_LOGIC;
+
                RGB_DATA : out STD_LOGIC_VECTOR (0 to 11));
     end component grid_controller;
 
@@ -61,6 +63,11 @@ GC: grid_controller port map (
     P1_RIGHT => P1_RIGHT,
     P1_DOWN => P1_DOWN,
     P1_LEFT => P1_LEFT,
+    
+    P2_UP => P2_UP,
+    P2_RIGHT => P2_RIGHT,
+    P2_DOWN => P2_DOWN,
+    P2_LEFT => P2_LEFT,
     
     RGB_DATA => rgb_data_buff
 );

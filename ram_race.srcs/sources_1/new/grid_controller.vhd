@@ -11,7 +11,8 @@ entity grid_controller is
            VLOC : in integer;
            
            P1_UP, P1_RIGHT, P1_DOWN, P1_LEFT : in STD_LOGIC;
-           
+           P2_UP, P2_RIGHT, P2_DOWN, P2_LEFT : in STD_LOGIC;
+
            RGB_DATA : out STD_LOGIC_VECTOR (0 TO 11));
 end grid_controller;
 
@@ -38,6 +39,9 @@ architecture Behavioral of grid_controller is
 
     signal p1_loc : integer := 1130;       -- Starting position as default value for first level
     signal p1_allowed_up, p1_allowed_down, p1_allowed_right, p1_allowed_left : std_logic;
+    
+    signal p2_loc : integer := 1149;       -- Starting position as default value for first level
+    signal p2_allowed_up, p2_allowed_down, p2_allowed_right, p2_allowed_left : std_logic;
     
     signal DATA_level : STD_LOGIC_VECTOR( 31 downto 0 );
     signal addr_level : STD_LOGIC_VECTOR( 10 downto 0 ) := (others => '0');
@@ -123,6 +127,9 @@ architecture Behavioral of grid_controller is
     signal Player_one_addra : STD_LOGIC_VECTOR(9 DOWNTO 0);
     signal Player_one_douta : STD_LOGIC_VECTOR(11 DOWNTO 0);
     
+    signal Player_two_addra : STD_LOGIC_VECTOR(9 DOWNTO 0);
+    signal Player_two_douta : STD_LOGIC_VECTOR(11 DOWNTO 0);
+    
     component player_one_sprite IS
       Port (
         clka : IN STD_LOGIC;
@@ -205,6 +212,14 @@ player_one : player_one_sprite port map (
     douta => Player_one_douta
 );
 
+player_two : player_one_sprite port map (
+    clka => CLK,
+    ena => '1',
+    
+    addra => Player_two_addra,
+    douta => Player_two_douta
+);
+
 current_cell_number : process(CLK)
 begin
     if (rising_edge(CLK)) then
@@ -268,10 +283,19 @@ begin
             elsif (cellNumber = p1_loc + 1) then
                 p1_allowed_right <= '0';
             end if;
+            if (cellNumber = p2_loc - 40) then
+                p2_allowed_up <= '0';
+            elsif (cellNumber = p2_loc + 40) then
+                p2_allowed_down <= '0';
+            elsif (cellNumber = p2_loc - 1) then
+                p2_allowed_left <= '0';
+            elsif (cellNumber = p2_loc + 1) then
+                p2_allowed_right <= '0';
+            end if;
         
             RGB_DATA <= "000000010101";
             
-        elsif (cellSpriteNumber = 2) then -- Black
+        elsif (cellSpriteNumber = 2) then -- Black / Wall
             if (cellNumber = p1_loc - 40) then
                 p1_allowed_up <= '0';
             elsif (cellNumber = p1_loc + 40) then
@@ -280,6 +304,16 @@ begin
                 p1_allowed_left <= '0';
             elsif (cellNumber = p1_loc + 1) then
                 p1_allowed_right <= '0';
+            end if;
+            
+            if (cellNumber = p2_loc - 40) then
+                p2_allowed_up <= '0';
+            elsif (cellNumber = p2_loc + 40) then
+                p2_allowed_down <= '0';
+            elsif (cellNumber = p2_loc - 1) then
+                p2_allowed_left <= '0';
+            elsif (cellNumber = p2_loc + 1) then
+                p2_allowed_right <= '0';
             end if;
             
             RGB_DATA <= "000000000000";
@@ -303,13 +337,27 @@ begin
             elsif (cellNumber = p1_loc + 1) then
                 p1_allowed_right <= '1';
             end if;
-
+            
+            if (cellNumber = p2_loc - 40) then
+                p2_allowed_up <= '1';
+            elsif (cellNumber = p2_loc + 40) then
+                p2_allowed_down <= '1';
+            elsif (cellNumber = p2_loc - 1) then
+                p2_allowed_left <= '1';
+            elsif (cellNumber = p2_loc + 1) then
+                p2_allowed_right <= '1';
+            end if;
+            
             if (cellNumber = p1_loc) then
                 player_one_addra <= std_logic_vector(to_unsigned((cellPixel - 1), 10));
                 RGB_DATA <= player_one_douta;
+            elsif (cellNumber = p2_loc) then
+                player_two_addra <= std_logic_vector(to_unsigned((cellPixel - 1), 10));
+                RGB_DATA <= player_two_douta;
             else
                 RGB_DATA <= "000010000000"; -- Player is not on floor
             end if;
+            
         elsif (cellSpriteNumber = 7) then -- Letter L 
             L_sprite_addra <= std_logic_vector(to_unsigned((cellPixel - 1), 8));
             RGB_DATA <= L_sprite_douta;
@@ -357,6 +405,28 @@ begin
             if (p1_allowed_left = '1') then
                 p1_loc <= p1_loc - 1;
                 p1_allowed_left <= '0';
+            end if;
+        end if;
+        
+        if (P2_UP = '1') then
+            if (p2_allowed_up = '1') then
+                p2_loc <= p2_loc - 40;
+                p2_allowed_up <= '0';
+            end if;
+        elsif (P2_RIGHT = '1') then
+            if (p2_allowed_right = '1') then
+                p2_loc <= p2_loc + 1;
+                p2_allowed_right <= '0';
+            end if;
+        elsif (P2_DOWN = '1') then
+            if (p2_allowed_down = '1') then
+                p2_loc <= p2_loc + 40;
+                p2_allowed_down <= '0';
+            end if;
+        elsif (P2_LEFT = '1') then
+            if (p2_allowed_left = '1') then
+                p2_loc <= p2_loc - 1;
+                p2_allowed_left <= '0';
             end if;
         end if;
     end if;

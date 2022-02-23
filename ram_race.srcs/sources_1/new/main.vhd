@@ -28,6 +28,12 @@ architecture Behavioral of main is
     
     -- Buffer for the player 1 controls, from P1 to D1
     signal p1_up_buff, p1_right_buff, p1_down_buff, p1_left_buff : STD_LOGIC;
+    
+    -- Buffer for the player 1 controls to player 1 ,from C2 to P2
+    signal c2_up_buff, c2_right_buff, c2_down_buff, c2_left_buff, c2_neut_buff  : STD_LOGIC;
+    
+    -- Buffer for the player 1 controls, from P2 to D1
+    signal p2_up_buff, p2_right_buff, p2_down_buff, p2_left_buff : STD_LOGIC;    
 
     -- 25Mhz clock prescaler mainly for the VGA controller
     component clk_25 is
@@ -65,6 +71,7 @@ architecture Behavioral of main is
                 CLK_25 : in STD_LOGIC;
                 
                 P1_UP, P1_RIGHT, P1_DOWN, P1_LEFT : in STD_LOGIC;
+                P2_UP, P2_RIGHT, P2_DOWN, P2_LEFT : in STD_LOGIC;
 
                 HSYNC : out STD_LOGIC;  
                 VSYNC : out STD_LOGIC;
@@ -98,21 +105,22 @@ C1 : controls port map (
     P_GO_NEUT => c1_neut_buff
 );
 
+
 -- Port map for the player 2 controls
---C2 : controls port map (
---    CLK => CLK_100,
+C2 : controls port map (
+    CLK => CLK_100,
     
---    JS_UP => JS2_UP,
---    JS_RIGHT => JS2_RIGHT,
---    JS_DOWN => JS2_DOWN,
---    JS_LEFT => JS2_LEFT,
+    JS_UP => JS2_UP,
+    JS_RIGHT => JS2_RIGHT,
+    JS_DOWN => JS2_DOWN,
+    JS_LEFT => JS2_LEFT,
     
---    P_GO_UP => c2_up_buff,
---    P_GO_RIGHT => c2_right_buff,
---    P_GO_DOWN => c2_down_buff,
---    P_GO_LEFT => c2_left_buff,
---    P_GO_NEUT => c2_neut_buff
---);
+    P_GO_UP => c2_up_buff,
+    P_GO_RIGHT => c2_right_buff,
+    P_GO_DOWN => c2_down_buff,
+    P_GO_LEFT => c2_left_buff,
+    P_GO_NEUT => c2_neut_buff
+);
 
 P1 : player_entity port map (
     CLK  => CLK_100,
@@ -130,20 +138,20 @@ P1 : player_entity port map (
 );
 
 -- Port map for the player 2
---P2 : player_entity port map (
---    CLK  => CLK_100,
+P2 : player_entity port map (
+    CLK  => CLK_100,
     
---    P_GO_UP => c2_up_buff, 
---    P_GO_RIGHT => c2_right_buff, 
---    P_GO_DOWN => c2_down_buff, 
---    P_GO_LEFT => c2_left_buff,  
---    P_GO_NEUT => c2_neut_buff,
+    P_GO_UP => c2_up_buff, 
+    P_GO_RIGHT => c2_right_buff, 
+    P_GO_DOWN => c2_down_buff, 
+    P_GO_LEFT => c2_left_buff,  
+    P_GO_NEUT => c2_neut_buff,
     
---    P_UP => p2_up_buff,
---    P_RIGHT => p2_right_buff,
---    P_DOWN => p2_down_buff,
---    P_LEFT => p2_left_buff
---);
+    P_UP => p2_up_buff,
+    P_RIGHT => p2_right_buff,
+    P_DOWN => p2_down_buff,
+    P_LEFT => p2_left_buff
+);
 
 D1 : display port map (
     CLK_100 => CLK_100,
@@ -153,6 +161,11 @@ D1 : display port map (
     P1_RIGHT => p1_right_buff,
     P1_DOWN => p1_down_buff,
     P1_LEFT => p1_left_buff,
+    
+    P2_UP => p2_up_buff,
+    P2_RIGHT => p2_right_buff,
+    P2_DOWN => p2_down_buff,
+    P2_LEFT => p2_left_buff,
     
     HSYNC =>  HSYNC,
     VSYNC =>  VSYNC,
