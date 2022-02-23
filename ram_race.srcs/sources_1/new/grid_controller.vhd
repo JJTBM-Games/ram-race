@@ -384,7 +384,10 @@ begin
                 three_sprite_addra <= std_logic_vector(to_unsigned((cellPixel - 1), 8));
                 RGB_DATA <= three_sprite_douta;
             end if;
+        elsif(cellSpriteNumber = 11) THEN
+            RGB_DATA <= "111111000100";
         end if;
+        
 
         if (P1_UP = '1') then
             if (p1_allowed_up = '1') then
