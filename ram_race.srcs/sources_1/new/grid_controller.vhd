@@ -2,10 +2,7 @@ library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.NUMERIC_STD.ALL;
 use IEEE.MATH_REAL.ALL;
---use IEEE.STD_LOGIC_ARITH.ALL;
 use IEEE.STD_LOGIC_UNSigned.ALL;
-
-
 
 entity grid_controller is
     Port ( CLK : in STD_LOGIC;
@@ -13,22 +10,22 @@ entity grid_controller is
            HLOC : in integer; 
            VLOC : in integer;
            
-           PLOC : in integer;
-           PLOC_old : in integer;
-           
+           P1_UP, P1_RIGHT, P1_DOWN, P1_LEFT : in STD_LOGIC;
+           P2_UP, P2_RIGHT, P2_DOWN, P2_LEFT : in STD_LOGIC;
+
            RGB_DATA : out STD_LOGIC_VECTOR (0 TO 11));
 end grid_controller;
 
 architecture Behavioral of grid_controller is
 
-    constant HD : integer := 640;      -- Horizontal display (1280 pixels) 
-    constant VD : integer := 480;      -- Vertical display (1024 pixels)
+    constant HD : integer := 640;      -- Horizontal display (640 pixels) 
+    constant VD : integer := 480;      -- Vertical display (480 pixels)
 
     constant CELL_WIDTH : integer := 16;
     constant CELL_HEIGHT : integer := 16;
     
     constant CELL_X_AMOUNT : integer := HD / CELL_WIDTH;    -- Should result in 40
-    constant CELL_Y_AMOUNT : integer := VD / CELL_HEIGHT;   -- Should result in 32
+    constant CELL_Y_AMOUNT : integer := VD / CELL_HEIGHT;   -- Should result in 30
     
     signal cellX : integer := 0;
     signal cellY : integer := 0;
@@ -39,27 +36,32 @@ architecture Behavioral of grid_controller is
     
     signal count : integer := 0;
     signal level_test_count : integer := 0;
- 
-   signal DATA_level : STD_LOGIC_VECTOR( 31 downto 0 );
-   signal addr_level : STD_LOGIC_VECTOR( 10 downto 0 ) := (others => '0');
+
+    signal p1_loc : integer := 1130;       -- Starting position as default value for first level
+    signal p1_allowed_up, p1_allowed_down, p1_allowed_right, p1_allowed_left : std_logic;
+    
+    signal p2_loc : integer := 1149;       -- Starting position as default value for first level
+    signal p2_allowed_up, p2_allowed_down, p2_allowed_right, p2_allowed_left : std_logic;
+    
+    signal DATA_level : STD_LOGIC_VECTOR( 31 downto 0 );
+    signal addr_level : STD_LOGIC_VECTOR( 10 downto 0 ) := (others => '0');
    
     component level is
-            PORT (
+            port (
                 clka : IN STD_LOGIC;
                 ena : IN STD_LOGIC;
                 addra : IN STD_LOGIC_VECTOR(10 DOWNTO 0);
-                douta : OUT STD_LOGIC_VECTOR(31 DOWNTO 0)
-              );    
+                douta : OUT STD_LOGIC_VECTOR(31 DOWNTO 0));    
     end component level;
     
     signal L_sprite_addra : STD_LOGIC_VECTOR(7 DOWNTO 0);
     signal L_sprite_douta : STD_LOGIC_VECTOR(11 DOWNTO 0);
     
     component L_sprite is
-        Port ( clka : IN STD_LOGIC;
-               ena : IN STD_LOGIC;
-               addra : IN STD_LOGIC_VECTOR(7 DOWNTO 0);
-               douta : OUT STD_LOGIC_VECTOR(11 DOWNTO 0));
+        Port (  clka : IN STD_LOGIC;
+                ena : IN STD_LOGIC;
+                addra : IN STD_LOGIC_VECTOR(7 DOWNTO 0);
+                douta : OUT STD_LOGIC_VECTOR(11 DOWNTO 0));
     end component;
     
     signal E_sprite_addra : STD_LOGIC_VECTOR(7 DOWNTO 0);
@@ -125,14 +127,17 @@ architecture Behavioral of grid_controller is
     signal Player_one_addra : STD_LOGIC_VECTOR(9 DOWNTO 0);
     signal Player_one_douta : STD_LOGIC_VECTOR(11 DOWNTO 0);
     
-    COMPONENT player_one_sprite IS
-      PORT (
+    signal Player_two_addra : STD_LOGIC_VECTOR(9 DOWNTO 0);
+    signal Player_two_douta : STD_LOGIC_VECTOR(11 DOWNTO 0);
+    
+    component player_one_sprite IS
+      Port (
         clka : IN STD_LOGIC;
         ena : IN STD_LOGIC;
         addra : IN STD_LOGIC_VECTOR(9 DOWNTO 0);
         douta : OUT STD_LOGIC_VECTOR(11 DOWNTO 0)
       );
-    END COMPONENT player_one_sprite;
+    end component player_one_sprite;
 begin
 
 L_sprite_map : L_sprite port map (
@@ -191,7 +196,6 @@ three_sprite_map : three_sprite port map (
     douta => three_sprite_douta
 );
 
-
 level_one : level port map(
     clka => CLK,
     ena => '1',
@@ -206,6 +210,14 @@ player_one : player_one_sprite port map (
     
     addra => Player_one_addra,
     douta => Player_one_douta
+);
+
+player_two : player_one_sprite port map (
+    clka => CLK,
+    ena => '1',
+    
+    addra => Player_two_addra,
+    douta => Player_two_douta
 );
 
 current_cell_number : process(CLK)
@@ -257,16 +269,55 @@ begin
         -- Determine the sprite of the current cell and it's RGB values using the current cell number (minus one because array starts at zero)
         addr_level <=  std_logic_vector(to_unsigned((cellNumber - 1), 11));
         cellSpriteNumber <= to_integer(unsigned(DATA_level));
-        
+      
         if (cellSpriteNumber = 0) then    -- White
             RGB_DATA <= "111111111111";
             
         elsif (cellSpriteNumber = 1) then -- Dark blue
+            if (cellNumber = p1_loc - 40) then
+                p1_allowed_up <= '0';
+            elsif (cellNumber = p1_loc + 40) then
+                p1_allowed_down <= '0';
+            elsif (cellNumber = p1_loc - 1) then
+                p1_allowed_left <= '0';
+            elsif (cellNumber = p1_loc + 1) then
+                p1_allowed_right <= '0';
+            end if;
+            if (cellNumber = p2_loc - 40) then
+                p2_allowed_up <= '0';
+            elsif (cellNumber = p2_loc + 40) then
+                p2_allowed_down <= '0';
+            elsif (cellNumber = p2_loc - 1) then
+                p2_allowed_left <= '0';
+            elsif (cellNumber = p2_loc + 1) then
+                p2_allowed_right <= '0';
+            end if;
+        
             RGB_DATA <= "000000010101";
             
-        elsif (cellSpriteNumber = 2) then -- Black
-            RGB_DATA <= "000000000000";
+        elsif (cellSpriteNumber = 2) then -- Black / Wall
+            if (cellNumber = p1_loc - 40) then
+                p1_allowed_up <= '0';
+            elsif (cellNumber = p1_loc + 40) then
+                p1_allowed_down <= '0';
+            elsif (cellNumber = p1_loc - 1) then
+                p1_allowed_left <= '0';
+            elsif (cellNumber = p1_loc + 1) then
+                p1_allowed_right <= '0';
+            end if;
             
+            if (cellNumber = p2_loc - 40) then
+                p2_allowed_up <= '0';
+            elsif (cellNumber = p2_loc + 40) then
+                p2_allowed_down <= '0';
+            elsif (cellNumber = p2_loc - 1) then
+                p2_allowed_left <= '0';
+            elsif (cellNumber = p2_loc + 1) then
+                p2_allowed_right <= '0';
+            end if;
+            
+            RGB_DATA <= "000000000000";
+
         elsif (cellSpriteNumber = 3) then -- Red
             RGB_DATA <= "110000010010";
             
@@ -277,9 +328,32 @@ begin
             RGB_DATA <= "000010011111";
             
         elsif (cellSpriteNumber = 6) then -- Floor
-            if (cellNumber = PLOC) then
+            if (cellNumber = p1_loc - 40) then
+                p1_allowed_up <= '1';
+            elsif (cellNumber = p1_loc + 40) then
+                p1_allowed_down <= '1';
+            elsif (cellNumber = p1_loc - 1) then
+                p1_allowed_left <= '1';
+            elsif (cellNumber = p1_loc + 1) then
+                p1_allowed_right <= '1';
+            end if;
+            
+            if (cellNumber = p2_loc - 40) then
+                p2_allowed_up <= '1';
+            elsif (cellNumber = p2_loc + 40) then
+                p2_allowed_down <= '1';
+            elsif (cellNumber = p2_loc - 1) then
+                p2_allowed_left <= '1';
+            elsif (cellNumber = p2_loc + 1) then
+                p2_allowed_right <= '1';
+            end if;
+            
+            if (cellNumber = p1_loc) then
                 player_one_addra <= std_logic_vector(to_unsigned((cellPixel - 1), 10));
                 RGB_DATA <= player_one_douta;
+            elsif (cellNumber = p2_loc) then
+                player_two_addra <= std_logic_vector(to_unsigned((cellPixel - 1), 10));
+                RGB_DATA <= player_two_douta;
             else
                 RGB_DATA <= "000010000000"; -- Player is not on floor
             end if;
@@ -309,6 +383,50 @@ begin
             elsif (level_test_count = 3) then
                 three_sprite_addra <= std_logic_vector(to_unsigned((cellPixel - 1), 8));
                 RGB_DATA <= three_sprite_douta;
+            end if;
+        end if;
+
+        if (P1_UP = '1') then
+            if (p1_allowed_up = '1') then
+                p1_loc <= p1_loc - 40;
+                p1_allowed_up <= '0';
+            end if;
+        elsif (P1_RIGHT = '1') then
+            if (p1_allowed_right = '1') then
+                p1_loc <= p1_loc + 1;
+                p1_allowed_right <= '0';
+            end if;
+        elsif (P1_DOWN = '1') then
+            if (p1_allowed_down = '1') then
+                p1_loc <= p1_loc + 40;
+                p1_allowed_down <= '0';
+            end if;
+        elsif (P1_LEFT = '1') then
+            if (p1_allowed_left = '1') then
+                p1_loc <= p1_loc - 1;
+                p1_allowed_left <= '0';
+            end if;
+        end if;
+        
+        if (P2_UP = '1') then
+            if (p2_allowed_up = '1') then
+                p2_loc <= p2_loc - 40;
+                p2_allowed_up <= '0';
+            end if;
+        elsif (P2_RIGHT = '1') then
+            if (p2_allowed_right = '1') then
+                p2_loc <= p2_loc + 1;
+                p2_allowed_right <= '0';
+            end if;
+        elsif (P2_DOWN = '1') then
+            if (p2_allowed_down = '1') then
+                p2_loc <= p2_loc + 40;
+                p2_allowed_down <= '0';
+            end if;
+        elsif (P2_LEFT = '1') then
+            if (p2_allowed_left = '1') then
+                p2_loc <= p2_loc - 1;
+                p2_allowed_left <= '0';
             end if;
         end if;
     end if;

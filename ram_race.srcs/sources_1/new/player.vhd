@@ -1,63 +1,58 @@
-----------------------------------------------------------------------------------
--- Company: JJTBM-games
--- Engineer: Tim Laheij
---
--- Create Date: 08.02.2022 10:52:34
--- Design Name:
--- Module Name: player - Behavioral
--- Project Name:
--- Target Devices:
--- Tool Versions:
--- Description:
---
--- Dependencies:
---
--- Revision:
--- Revision 0.01 - File Created
--- Additional Comments:
---
-----------------------------------------------------------------------------------
-LIBRARY IEEE;
-USE IEEE.STD_LOGIC_1164.ALL;
--- Uncomment the following library declaration if using
--- arithmetic functions with Signed or Unsigned values
-USE IEEE.NUMERIC_STD.ALL;
-USE IEEE.MATH_REAL.ALL;
--- Uncomment the following library declaration if instantiating
--- any Xilinx leaf cells in this code.
---library UNISIM;
---use UNISIM.VComponents.all;
-ENTITY player IS
-	PORT
-	(
-		up, down, left, right, neut  : IN std_logic;
-		clk                          : IN std_logic;
-		calc                         : IN std_logic;
-		pos                          : OUT INTEGER := 161;
-		old_pos                      : OUT INTEGER := 161
-	);
-END player;
-ARCHITECTURE Behavioral OF player IS
-	SIGNAL position : INTEGER := 1170;
-	SIGNAL old_position : INTEGER := 1170;
-BEGIN
-	old_pos <= old_position;
-	pos <= position;
-	PROCESS (clk)
-	BEGIN
-		IF rising_edge(clk) THEN
-			IF (calc = '1') THEN
-				old_position <= position;
-				IF (up = '1') THEN
-					position <= (position - 40);
-				ELSIF (left = '1') THEN
-					position <= (position - 1);
-				ELSIF (right = '1') THEN
-					position <= (position + 1);
-				ELSIF (down = '1') THEN
-					position <= (position + 40);
-				END IF;
-			END IF;
-		END IF;
-	END PROCESS;
-END Behavioral;
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+use IEEE.NUMERIC_STD.ALL;
+use IEEE.MATH_REAL.ALL;
+
+entity player is
+    Port (  CLK : in STD_LOGIC;
+            
+            CALC : in STD_LOGIC;
+            P_GO_UP, P_GO_RIGHT, P_GO_DOWN, P_GO_LEFT, P_GO_NEUT : in STD_LOGIC;
+		    
+		    P_UP, P_RIGHT, P_DOWN, P_LEFT : out STD_LOGIC);
+end player;
+
+architecture Behavioral of player is
+	
+begin
+    
+calculate_direction : process (CLK)
+begin
+    if rising_edge(CLK) then  	
+        if (calc = '1') then
+            if (P_GO_UP = '1') then
+                P_UP <= '1';
+				P_RIGHT <= '0';
+				P_DOWN <= '0';
+				P_DOWN <= '0';
+			elsif (P_GO_RIGHT = '1') then
+                P_UP <= '0';
+				P_RIGHT <= '1';
+				P_DOWN <= '0';
+				P_LEFT <= '0';
+			elsif (P_GO_DOWN = '1') then
+				P_UP <= '0';
+				P_RIGHT <= '0';
+				P_DOWN <= '1';
+				P_LEFT <= '0';
+			elsif (P_GO_LEFT = '1') then
+				P_UP <= '0';
+				P_RIGHT <= '0';
+				P_DOWN <= '0';
+				P_LEFT <= '1';
+			elsif (P_GO_NEUT = '1') then
+			    P_UP <= '0';
+				P_RIGHT <= '0';
+				P_DOWN <= '0';
+				P_LEFT <= '0';
+			end if;
+		else
+		    P_UP <= '0';
+		    P_RIGHT <= '0';
+			P_DOWN <= '0';
+			P_LEFT <= '0';
+		end if;
+	end if;
+end process calculate_direction;
+	
+end Behavioral;

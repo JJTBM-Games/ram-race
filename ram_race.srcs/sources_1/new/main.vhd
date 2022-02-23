@@ -1,139 +1,178 @@
-----------------------------------------------------------------------------------
--- Company: 
--- Engineer: 
--- 
--- Create Date: 09.02.2022 14:32:03
--- Design Name: 
--- Module Name: main - Behavioral
--- Project Name: 
--- Target Devices: 
--- Tool Versions: 
--- Description: 
--- 
--- Dependencies: 
--- 
--- Revision:
--- Revision 0.01 - File Created
--- Additional Comments:
--- 
-----------------------------------------------------------------------------------
-
-
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 
--- Uncomment the following library declaration if using
--- arithmetic functions with Signed or Unsigned values
---use IEEE.NUMERIC_STD.ALL;
-
--- Uncomment the following library declaration if instantiating
--- any Xilinx leaf cells in this code.
---library UNISIM;
---use UNISIM.VComponents.all;
-
 entity main is
-    Port (clk : in STD_LOGIC;
-    	   jsup, jsdown, jsleft, jsright  : IN std_logic;
-
-    
-           HSYNC : out STD_LOGIC;  
-           VSYNC : out STD_LOGIC;
+    Port (  CLK_100 : in STD_LOGIC;
             
-           RED : out STD_LOGIC_VECTOR (0 TO 3); 
-           GREEN : out STD_LOGIC_VECTOR (0 TO 3);
-           BLUE : out STD_LOGIC_VECTOR (0 TO 3) );
+            -- Player 1 joystick input
+            JS1_UP, JS1_RIGHT, JS1_DOWN, JS1_LEFT  : in STD_LOGIC;
+            
+            -- Player 2 joystick input
+            JS2_UP, JS2_RIGHT, JS2_DOWN, JS2_LEFT  : in STD_LOGIC;
+
+            -- VGA values
+            HSYNC : out STD_LOGIC;  
+            VSYNC : out STD_LOGIC;
+            
+            RED : out STD_LOGIC_VECTOR (0 to 3); 
+            GREEN : out STD_LOGIC_VECTOR (0 to 3);
+            BLUE : out STD_LOGIC_VECTOR (0 to 3));
 end main;
 
-
 architecture Behavioral of main is
+ 
+    signal clk_25_buff : STD_LOGIC;
+    
+    -- Buffer for the player 1 controls to player 1 ,from C1 to P1
+    signal c1_up_buff, c1_right_buff, c1_down_buff, c1_left_buff, c1_neut_buff  : STD_LOGIC;
+    
+    -- Buffer for the player 1 controls, from P1 to D1
+    signal p1_up_buff, p1_right_buff, p1_down_buff, p1_left_buff : STD_LOGIC;
+    
+    -- Buffer for the player 1 controls to player 1 ,from C2 to P2
+    signal c2_up_buff, c2_right_buff, c2_down_buff, c2_left_buff, c2_neut_buff  : STD_LOGIC;
+    
+    -- Buffer for the player 1 controls, from P2 to D1
+    signal p2_up_buff, p2_right_buff, p2_down_buff, p2_left_buff : STD_LOGIC;    
 
-COMPONENT display IS
-    Port ( CLK : in STD_LOGIC;
-           CLK_board : in STD_LOGIC;
+    -- 25Mhz clock prescaler mainly for the VGA controller
+    component clk_25 is
+        Port (  clk_in1 : in STD_LOGIC;
+                reset : in STD_LOGIC;
+                   
+                locked : out STD_LOGIC;
+                CLK_25MHz : out STD_LOGIC);
+    end component clk_25;
+    
+    component controls is
+        Port (  CLK : in STD_LOGIC;
+    
+                JS_UP : in STD_LOGIC;
+                JS_RIGHT : in STD_LOGIC;
+                JS_DOWN : in STD_LOGIC;
+                JS_LEFT : in STD_LOGIC;
+                
+                P_GO_UP : out STD_LOGIC;
+                P_GO_RIGHT : out STD_LOGIC;
+                P_GO_DOWN : out STD_LOGIC;
+                P_GO_LEFT : out STD_LOGIC;
+                P_GO_NEUT : out STD_LOGIC);
+    end component controls;
 
-           HSYNC : out STD_LOGIC;  
-           VSYNC : out STD_LOGIC;
+    component player_entity is
+        Port (  CLK : in STD_LOGIC;
+                P_GO_UP, P_GO_RIGHT, P_GO_DOWN, P_GO_LEFT, P_GO_NEUT : in STD_LOGIC;
             
-           RED : out STD_LOGIC_VECTOR (0 TO 3); 
-           GREEN : out STD_LOGIC_VECTOR (0 TO 3);
-           BLUE : out STD_LOGIC_VECTOR (0 TO 3);
-           
-           PLOC : in integer;
-           PLOC_old : in integer);
-END COMPONENT display;
+                P_UP, P_RIGHT, P_DOWN, P_LEFT : out STD_LOGIC);
+    end component player_entity;
+    
+    component display is   
+        Port (  CLK_100 : in STD_LOGIC;
+                CLK_25 : in STD_LOGIC;
+                
+                P1_UP, P1_RIGHT, P1_DOWN, P1_LEFT : in STD_LOGIC;
+                P2_UP, P2_RIGHT, P2_DOWN, P2_LEFT : in STD_LOGIC;
 
-COMPONENT player_entity IS
-    PORT
-	(
-	            up, down, left, right, neut  : IN std_logic;
-
-		clk                          : IN std_logic;
-		pos                          : OUT INTEGER := 161;
-		old_pos                      : OUT INTEGER := 161
-	);
-END COMPONENT player_entity;
-
-COMPONENT controls IS
-Port ( Clk              : in STD_LOGIC;
-           JoystickLeft     : in STD_LOGIC;
-           JoystickRight    : in STD_LOGIC;
-           JoystickUp       : in STD_LOGIC;
-           JoystickDown     : in STD_LOGIC;
-           Left : out STD_LOGIC;
-           Right : out STD_LOGIC;
-           Up : out STD_LOGIC;
-           Down : out STD_LOGIC;
-           Neutral : out STD_LOGIC);
-END COMPONENT controls;
-
-COMPONENT clk_25 IS
-        Port ( clk_in1 : in STD_LOGIC;
-               reset : in STD_LOGIC;
-               
-               locked : out STD_LOGIC;
-               CLK_25MHz : out STD_LOGIC);
-END COMPONENT clk_25;
-
-SIGNAL clk_25mhz : std_logic;
-SIGNAL position : INTEGER;
-SIGNAL position_old : INTEGER;
-
-SIGNAL sup, sdown, sleft, sright, sneut  : std_logic;
+                HSYNC : out STD_LOGIC;  
+                VSYNC : out STD_LOGIC;
+            
+                RED : out STD_LOGIC_VECTOR (0 TO 3); 
+                GREEN : out STD_LOGIC_VECTOR (0 TO 3);
+                BLUE : out STD_LOGIC_VECTOR (0 TO 3));
+    end component display;
 
 begin
 
-CD1 : clk_25 Port Map(clk_in1 => clk,
-                        reset => '0',
-                        clk_25mhz => clk_25mhz);
+CD1 : clk_25 port map (
+    clk_in1 => CLK_100,
+    
+    reset => '0',
+    clk_25mhz => clk_25_buff
+);
 
-D1 : display Port Map (CLK => clk_25mhz,
-                       CLK_board => clk,
-                       HSYNC =>  HSYNC,
-                       VSYNC =>  VSYNC,
-                       RED => RED,
-                       GREEN => GREEN,
-                       BLUE => BLUE,
-                       PLOC => position,
-                       PLOC_old => position_old);
+C1 : controls port map (
+    CLK => CLK_100,
+    
+    JS_UP => JS1_UP,
+    JS_RIGHT => JS1_RIGHT,
+    JS_DOWN => JS1_DOWN,
+    JS_LEFT => JS1_LEFT,
+    
+    P_GO_UP => c1_up_buff,
+    P_GO_RIGHT => c1_right_buff,
+    P_GO_DOWN => c1_down_buff,
+    P_GO_LEFT => c1_left_buff,
+    P_GO_NEUT => c1_neut_buff
+);
 
-P1 : player_entity Port Map(up => sup, 
-                            down => sdown, 
-                            left => sleft, 
-                            right => sright, 
-                            neut => sneut,
-                            clk  => clk,
-                            pos => position,
-                            old_pos => position_old);
 
-C1 : controls Port Map(Clk => clk,
-                       JoystickLeft => jsleft,
-                       JoystickRight => jsright,
-                       JoystickUp => jsup,
-                       JoystickDown => jsdown,
-                       Left => sleft,
-                       Right => sright,
-                       Up => sup,
-                       Down => sdown,
-                       Neutral => sneut);
+-- Port map for the player 2 controls
+C2 : controls port map (
+    CLK => CLK_100,
+    
+    JS_UP => JS2_UP,
+    JS_RIGHT => JS2_RIGHT,
+    JS_DOWN => JS2_DOWN,
+    JS_LEFT => JS2_LEFT,
+    
+    P_GO_UP => c2_up_buff,
+    P_GO_RIGHT => c2_right_buff,
+    P_GO_DOWN => c2_down_buff,
+    P_GO_LEFT => c2_left_buff,
+    P_GO_NEUT => c2_neut_buff
+);
+
+P1 : player_entity port map (
+    CLK  => CLK_100,
+    
+    P_GO_UP => c1_up_buff, 
+    P_GO_RIGHT => c1_right_buff, 
+    P_GO_DOWN => c1_down_buff, 
+    P_GO_LEFT => c1_left_buff,  
+    P_GO_NEUT => c1_neut_buff,
+    
+    P_UP => p1_up_buff,
+    P_RIGHT => p1_right_buff,
+    P_DOWN => p1_down_buff,
+    P_LEFT => p1_left_buff
+);
+
+-- Port map for the player 2
+P2 : player_entity port map (
+    CLK  => CLK_100,
+    
+    P_GO_UP => c2_up_buff, 
+    P_GO_RIGHT => c2_right_buff, 
+    P_GO_DOWN => c2_down_buff, 
+    P_GO_LEFT => c2_left_buff,  
+    P_GO_NEUT => c2_neut_buff,
+    
+    P_UP => p2_up_buff,
+    P_RIGHT => p2_right_buff,
+    P_DOWN => p2_down_buff,
+    P_LEFT => p2_left_buff
+);
+
+D1 : display port map (
+    CLK_100 => CLK_100,
+    CLK_25 => clk_25_buff,
+   
+    P1_UP => p1_up_buff,
+    P1_RIGHT => p1_right_buff,
+    P1_DOWN => p1_down_buff,
+    P1_LEFT => p1_left_buff,
+    
+    P2_UP => p2_up_buff,
+    P2_RIGHT => p2_right_buff,
+    P2_DOWN => p2_down_buff,
+    P2_LEFT => p2_left_buff,
+    
+    HSYNC =>  HSYNC,
+    VSYNC =>  VSYNC,
+    
+    RED => RED,
+    GREEN => GREEN,
+    BLUE => BLUE
+);
 
 end Behavioral;
