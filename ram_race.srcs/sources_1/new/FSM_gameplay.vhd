@@ -34,8 +34,11 @@ use IEEE.STD_LOGIC_1164.ALL;
 entity FSM_gameplay is
     Port ( clk              : in STD_LOGIC;
            btnStart         : in STD_LOGIC;
+           score_saved      : in STD_LOGIC;
+           async_reset      : in STD_LOGIC;
            
-           PLOC             : in INTEGER;
+           P_1_LOC          : in INTEGER;
+           P_2_LOC          : in INTEGER;
            
            menu_out         : out STD_LOGIC;
            name_out         : out STD_LOGIC;
@@ -51,16 +54,57 @@ SIGNAL state, next_state : game_state;
 
 begin
 
-state_process : process (CLK)
+state_process : process (CLK, async_reset)
     begin
         if (rising_edge(CLK)) then
             state <= next_state;
         end if;
+        if (async_reset = '1') THEN
+            state <= menu;
+        END IF;
     end process state_process;
 
-NSL : process (CLK)
+NSL : process (state)
     begin
-        
+        next_state <= state;
+        case state is 
+            when menu =>
+                if (btnStart = '1') THEN
+                   next_state <= starting; 
+                ELSE
+                    next_state <= state;
+                END IF;
+            WHEN starting =>
+                if (btnStart = '0') THEN
+                    next_state <= set_name;
+                ELSE
+                    next_state <= state;
+                END IF;
+            WHEN set_name =>
+                if (btnStart = '1') THEN
+                   next_state <= playing; 
+                ELSE
+                    next_state <= state;
+                END IF;
+            WHEN playing =>
+                if (P_1_LOC = 300) THEN
+                    next_state <= save_score; 
+                ELSIF (P_1_LOC = 301) THEN
+                    next_state <= save_score;
+                ELSIF (P_2_LOC = 300) THEN
+                    next_state <= save_score;
+                ELSIF (P_2_LOC = 301) THEN
+                    next_state <= save_score;
+                ELSE
+                    next_state <= state;
+                END IF;
+            WHEN save_score =>
+                IF (score_saved = '1') THEN
+                    next_state <= menu;
+                ELSE 
+                    next_state <= state;
+                END IF;
+        END CASE;        
     end process NSL;
 
 end Behavioral;
