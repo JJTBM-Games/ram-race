@@ -69,24 +69,33 @@ NSL : process (state)
         next_state <= state;
         case state is 
             when menu =>
+            menu_out <= '1';
+            name_out <= '0';
+            playing_out <= '0';
+            save_score_out <= '0';
+            
                 if (btnStart = '1') THEN
                    next_state <= starting; 
                 ELSE
                     next_state <= state;
                 END IF;
             WHEN starting =>
+            menu_out <= '0';
                 if (btnStart = '0') THEN
                     next_state <= set_name;
                 ELSE
                     next_state <= state;
                 END IF;
             WHEN set_name =>
+            name_out <= '1';
                 if (btnStart = '1') THEN
                    next_state <= playing; 
                 ELSE
                     next_state <= state;
                 END IF;
             WHEN playing =>
+            name_out <= '0';
+            playing_out <= '1';
                 if (P_1_LOC = 300) THEN
                     next_state <= save_score; 
                 ELSIF (P_1_LOC = 301) THEN
@@ -99,6 +108,8 @@ NSL : process (state)
                     next_state <= state;
                 END IF;
             WHEN save_score =>
+            playing_out <= '0';
+            save_score_out <= '1';
                 IF (score_saved = '1') THEN
                     next_state <= menu;
                 ELSE 
