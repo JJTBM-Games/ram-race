@@ -7,8 +7,13 @@ use IEEE.STD_LOGIC_UNSigned.ALL;
 entity grid_controller is
     Port ( CLK : in STD_LOGIC;
            
+           enGame : in STD_LOGIC;
+           reset : in STD_LOGIC;
+           
            HLOC : in integer; 
            VLOC : in integer;
+           
+           endGame : out STD_LOGIC;
            
            P1_UP, P1_RIGHT, P1_DOWN, P1_LEFT : in STD_LOGIC;
            P2_UP, P2_RIGHT, P2_DOWN, P2_LEFT : in STD_LOGIC;
@@ -40,7 +45,7 @@ architecture Behavioral of grid_controller is
     signal p1_loc : integer := 1130;       -- Starting position as default value for first level
     signal p1_allowed_up, p1_allowed_down, p1_allowed_right, p1_allowed_left : std_logic;
     
-    signal p2_loc : integer := 1149;       -- Starting position as default value for first level
+    signal p2_loc : integer := 1151;       -- Starting position as default value for first level
     signal p2_allowed_up, p2_allowed_down, p2_allowed_right, p2_allowed_left : std_logic;
     
     signal DATA_level : STD_LOGIC_VECTOR( 31 downto 0 );
@@ -266,6 +271,11 @@ end process;
 current_cell_sprite : process(CLK)
 begin
     if (rising_edge(CLK)) then
+        if( reset = '1' ) THEN
+            p1_loc <= 1130;
+            p2_loc <= 1151;
+        END IF;
+    
         -- Determine the sprite of the current cell and it's RGB values using the current cell number (minus one because array starts at zero)
         addr_level <=  std_logic_vector(to_unsigned((cellNumber - 1), 11));
         cellSpriteNumber <= to_integer(unsigned(DATA_level));
@@ -384,52 +394,72 @@ begin
                 three_sprite_addra <= std_logic_vector(to_unsigned((cellPixel - 1), 8));
                 RGB_DATA <= three_sprite_douta;
             end if;
-        end if;
-
-        if (P1_UP = '1') then
-            if (p1_allowed_up = '1') then
-                p1_loc <= p1_loc - 40;
-                p1_allowed_up <= '0';
-            end if;
-        elsif (P1_RIGHT = '1') then
-            if (p1_allowed_right = '1') then
-                p1_loc <= p1_loc + 1;
-                p1_allowed_right <= '0';
-            end if;
-        elsif (P1_DOWN = '1') then
-            if (p1_allowed_down = '1') then
-                p1_loc <= p1_loc + 40;
-                p1_allowed_down <= '0';
-            end if;
-        elsif (P1_LEFT = '1') then
-            if (p1_allowed_left = '1') then
-                p1_loc <= p1_loc - 1;
-                p1_allowed_left <= '0';
-            end if;
+        elsif(cellSpriteNumber = 11) THEN
+            RGB_DATA <= "111111000100";
         end if;
         
-        if (P2_UP = '1') then
-            if (p2_allowed_up = '1') then
-                p2_loc <= p2_loc - 40;
-                p2_allowed_up <= '0';
+        IF ( enGame = '1' ) THEN
+            
+                if (P1_UP = '1') then
+                if (p1_allowed_up = '1') then
+                    p1_loc <= p1_loc - 40;
+                    p1_allowed_up <= '0';
+                end if;
+            elsif (P1_RIGHT = '1') then
+                if (p1_allowed_right = '1') then
+                    p1_loc <= p1_loc + 1;
+                    p1_allowed_right <= '0';
+                end if;
+            elsif (P1_DOWN = '1') then
+                if (p1_allowed_down = '1') then
+                    p1_loc <= p1_loc + 40;
+                    p1_allowed_down <= '0';
+                end if;
+            elsif (P1_LEFT = '1') then
+                if (p1_allowed_left = '1') then
+                    p1_loc <= p1_loc - 1;
+                    p1_allowed_left <= '0';
+                end if;
             end if;
-        elsif (P2_RIGHT = '1') then
-            if (p2_allowed_right = '1') then
-                p2_loc <= p2_loc + 1;
-                p2_allowed_right <= '0';
+            
+            if (P2_UP = '1') then
+                if (p2_allowed_up = '1') then
+                    p2_loc <= p2_loc - 40;
+                    p2_allowed_up <= '0';
+                end if;
+            elsif (P2_RIGHT = '1') then
+                if (p2_allowed_right = '1') then
+                    p2_loc <= p2_loc + 1;
+                    p2_allowed_right <= '0';
+                end if;
+            elsif (P2_DOWN = '1') then
+                if (p2_allowed_down = '1') then
+                    p2_loc <= p2_loc + 40;
+                    p2_allowed_down <= '0';
+                end if;
+            elsif (P2_LEFT = '1') then
+                if (p2_allowed_left = '1') then
+                    p2_loc <= p2_loc - 1;
+                    p2_allowed_left <= '0';
+                end if;
             end if;
-        elsif (P2_DOWN = '1') then
-            if (p2_allowed_down = '1') then
-                p2_loc <= p2_loc + 40;
-                p2_allowed_down <= '0';
-            end if;
-        elsif (P2_LEFT = '1') then
-            if (p2_allowed_left = '1') then
-                p2_loc <= p2_loc - 1;
-                p2_allowed_left <= '0';
-            end if;
-        end if;
+        END IF;
     end if;
 end process;
+
+gameplay : process(CLK)
+    BEGIN
+    IF(rising_edge(CLK)) THEN
+          IF (p1_loc = 300) THEN
+            endGame <= '1';
+          ELSIF (p2_loc = 301) THEN
+            endGame <= '1';
+          ELSIF (reset = '1') THEN
+            endGame <= '0';
+          else
+            endGame <= '0';
+          END IF;  
+      END IF;
+    END PROCESS;
 
 end Behavioral;
