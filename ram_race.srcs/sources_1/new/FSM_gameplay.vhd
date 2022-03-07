@@ -36,9 +36,7 @@ entity FSM_gameplay is
            btnStart         : in STD_LOGIC;
            score_saved      : in STD_LOGIC;
            async_reset      : in STD_LOGIC;
-           
-           P_1_LOC          : in INTEGER;
-           P_2_LOC          : in INTEGER;
+           endGame          : in STD_LOGIC;
            
            menu_out         : out STD_LOGIC;
            name_out         : out STD_LOGIC;
@@ -67,54 +65,48 @@ state_process : process (CLK, async_reset)
 NSL : process (state)
     begin
         next_state <= state;
-        case state is 
-            when menu =>
-            menu_out <= '1';
-            name_out <= '0';
-            playing_out <= '0';
-            save_score_out <= '0';
-            
-                if (btnStart = '1') THEN
-                   next_state <= starting; 
-                ELSE
-                    next_state <= state;
-                END IF;
+        CASE state is 
+            WHEN menu =>
+                menu_out <= '1';
+                name_out <= '0';
+                playing_out <= '0';
+                save_score_out <= '0';
+                    if (btnStart = '1') THEN
+                       next_state <= starting; 
+                    ELSE
+                        next_state <= state;
+                    END IF;
             WHEN starting =>
-            menu_out <= '0';
-                if (btnStart = '0') THEN
-                    next_state <= set_name;
-                ELSE
-                    next_state <= state;
-                END IF;
+                menu_out <= '0';
+                    if (btnStart = '0') THEN
+                        next_state <= set_name;
+                    ELSE
+                        next_state <= state;
+                    END IF;
             WHEN set_name =>
-            name_out <= '1';
-                if (btnStart = '1') THEN
-                   next_state <= playing; 
-                ELSE
-                    next_state <= state;
-                END IF;
+                name_out <= '1';
+                    if (btnStart = '1') THEN
+                       next_state <= playing; 
+                    ELSE
+                        next_state <= state;
+                    END IF;
             WHEN playing =>
-            name_out <= '0';
-            playing_out <= '1';
-                if (P_1_LOC = 300) THEN
-                    next_state <= save_score; 
-                ELSIF (P_1_LOC = 301) THEN
-                    next_state <= save_score;
-                ELSIF (P_2_LOC = 300) THEN
-                    next_state <= save_score;
-                ELSIF (P_2_LOC = 301) THEN
-                    next_state <= save_score;
-                ELSE
-                    next_state <= state;
-                END IF;
+                name_out <= '0';
+                playing_out <= '1';
+                    if (endGame = '1') THEN
+                        playing_out <= '0';
+                        next_state <= save_score;
+                    ELSE
+                        next_state <= state;
+                    END IF;
             WHEN save_score =>
-            playing_out <= '0';
-            save_score_out <= '1';
-                IF (score_saved = '1') THEN
-                    next_state <= menu;
-                ELSE 
-                    next_state <= state;
-                END IF;
+                playing_out <= '0';
+                save_score_out <= '1';
+                    IF (score_saved = '1') THEN
+                        next_state <= menu;
+                    ELSE 
+                        next_state <= state;
+                    END IF;
         END CASE;        
     end process NSL;
 
