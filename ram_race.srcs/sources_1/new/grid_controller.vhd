@@ -271,6 +271,11 @@ end process;
 current_cell_sprite : process(CLK)
 begin
     if (rising_edge(CLK)) then
+        if( reset = '1' ) THEN
+            p1_loc <= 1130;
+            p2_loc <= 1151;
+        END IF;
+    
         -- Determine the sprite of the current cell and it's RGB values using the current cell number (minus one because array starts at zero)
         addr_level <=  std_logic_vector(to_unsigned((cellNumber - 1), 11));
         cellSpriteNumber <= to_integer(unsigned(DATA_level));
@@ -450,8 +455,6 @@ gameplay : process(CLK)
           ELSIF (p2_loc = 301) THEN
             endGame <= '1';
           ELSIF (reset = '1') THEN
-            p1_loc <= 1130;
-            p2_loc <= 1151;
             endGame <= '0';
           else
             endGame <= '0';
