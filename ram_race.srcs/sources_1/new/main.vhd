@@ -46,6 +46,9 @@ architecture Behavioral of main is
     -- Buffer for buttons from controls to output
     signal p1_action1_buff, p2_action1_buff, p1_action2_buff, p2_action2_buff : STD_LOGIC;
     
+    -- Buffer for MENU btns
+    SIGNAL p1_menu_btn, p2_menu_btn : STD_LOGIC;
+    
     -- PLOC for checking winner
     SIGNAL endGame_buffer : STD_LOGIC;
     
@@ -71,7 +74,9 @@ architecture Behavioral of main is
                 
                 BTN_ACTION1 : in STD_LOGIC;
                 BTN_ACTION2 : in STD_LOGIC;
+                BTN_MENU : in STD_LOGIC;
                 
+                MENU_OUT    : out STD_LOGIC;
                 P_ACTION1 : out STD_LOGIC;
                 P_ACTION2 : out STD_LOGIC;
                     
@@ -142,7 +147,9 @@ C1 : controls port map (
     
     BTN_ACTION1 => BTN1_ACT1,
     BTN_ACTION2 => BTN1_ACT2,
-                
+    BTN_MENU => btnstart,
+    
+    MENU_OUT => p1_menu_btn,
     P_ACTION1 => p1_action1_buff,
     P_ACTION2 => p1_action2_buff,
     
@@ -168,7 +175,9 @@ C2 : controls port map (
     
     BTN_ACTION1 => BTN2_ACT1,
     BTN_ACTION2 => BTN2_ACT2,
-                
+    BTN_MENU => reset,            
+    
+    MENU_OUT => p2_menu_btn,
     P_ACTION1 => p2_action1_buff,
     P_ACTION2 => p2_action2_buff,
     
@@ -237,9 +246,9 @@ D1 : display port map (
 );
 
 FSM : FSM_gameplay Port Map(   clk => clk_100,
-                               btnStart => btnStart,
+                               btnStart => p1_menu_btn,
                                score_saved => save,
-                               async_reset => reset,
+                               async_reset => p2_menu_btn,
                                
                                endGame => endGame_buffer,
                                

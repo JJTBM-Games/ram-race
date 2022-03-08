@@ -11,10 +11,12 @@ entity controls is
             
             BTN_ACTION1 : in STD_LOGIC;
             BTN_ACTION2 : in STD_LOGIC;
+            BTN_MENU    : in STD_LOGIC;
             
             P_ACTION1 : out STD_LOGIC;
             P_ACTION2 : out STD_LOGIC;
-                
+            MENU_OUT    : out STD_LOGIC;
+
             P_GO_UP : out STD_LOGIC;
             P_GO_RIGHT : out STD_LOGIC;
             P_GO_DOWN : out STD_LOGIC;
@@ -45,7 +47,9 @@ architecture Behavioral of controls is
             CLK         : in STD_LOGIC;
             BTN_ACTION1 : in STD_LOGIC;
             BTN_ACTION2 : in STD_LOGIC;
-            
+            BTN_MENU    : in STD_LOGIC;
+            MENU_OUT    : out STD_LOGIC;
+
             P_ACTION1 : out STD_LOGIC;
             P_ACTION2 : out STD_LOGIC 
           );
@@ -72,8 +76,9 @@ BC: btn_controller port map (
     CLK => CLK,
     BTN_ACTION1 => BTN_ACTION1,
     BTN_ACTION2 => BTN_ACTION2,
-                
+    BTN_MENU => BTN_MENU,            
     P_ACTION1 => P_ACTION1,
-    P_ACTION2 => P_ACTION2
+    P_ACTION2 => P_ACTION2,
+    MENU_OUT => MENU_OUT
     );
 end Behavioral;

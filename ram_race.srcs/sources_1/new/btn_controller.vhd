@@ -36,9 +36,11 @@ entity btn_controller is
             CLK         : in STD_LOGIC;
             BTN_ACTION1 : in STD_LOGIC;
             BTN_ACTION2 : in STD_LOGIC;
+            BTN_MENU    : in STD_LOGIC;
             
-            P_ACTION1 : out STD_LOGIC;
-            P_ACTION2 : out STD_LOGIC 
+            MENU_OUT    : out STD_LOGIC;
+            P_ACTION1   : out STD_LOGIC;
+            P_ACTION2   : out STD_LOGIC 
           );
 end btn_controller;
 
@@ -62,7 +64,14 @@ begin
                 P_ACTION2 <= '1';
             ELSIF BTN_ACTION2 = '0' THEN
                 P_ACTION2 <= '0';
-            END IF;            
+            END IF;     
+            
+            if BTN_MENU = '1' THEN
+                MENU_OUT <= '1';
+            ELSIF BTN_MENU = '0' THEN
+                MENU_OUT <= '0';
+            END IF;
+                   
             count <= 0;
              
         else
