@@ -5,13 +5,18 @@ entity main is
     Port (  CLK_100 : in STD_LOGIC;
             
             -- Player 1 joystick input
-            JS1_UP, JS1_RIGHT, JS1_DOWN, JS1_LEFT  : in STD_LOGIC;
+            JS1_UP, JS1_RIGHT, JS1_DOWN, JS1_LEFT, BTN1_ACT1, BTN1_ACT2  : in STD_LOGIC;
             
             -- Player 2 joystick input
-            JS2_UP, JS2_RIGHT, JS2_DOWN, JS2_LEFT  : in STD_LOGIC;
+            JS2_UP, JS2_RIGHT, JS2_DOWN, JS2_LEFT, BTN2_ACT1, BTN2_ACT2  : in STD_LOGIC;
             
             -- State inputs
             btnStart, save, reset : in STD_LOGIC;
+
+            -- Action button test
+            P1_ACT1, P1_ACT2 : out STD_LOGIC;
+            
+            P2_ACT1, P2_ACT2 : out STD_LOGIC;
 
             -- VGA values
             HSYNC : out STD_LOGIC;  
@@ -38,6 +43,12 @@ architecture Behavioral of main is
     -- Buffer for the player 1 controls, from P2 to D1
     signal p2_up_buff, p2_right_buff, p2_down_buff, p2_left_buff : STD_LOGIC;
     
+    -- Buffer for buttons from controls to output
+    signal p1_action1_buff, p2_action1_buff, p1_action2_buff, p2_action2_buff : STD_LOGIC;
+    
+    -- Buffer for MENU btns
+    SIGNAL p1_menu_btn, p2_menu_btn : STD_LOGIC;
+    
     -- PLOC for checking winner
     SIGNAL endGame_buffer : STD_LOGIC;
     
@@ -61,6 +72,14 @@ architecture Behavioral of main is
                 JS_DOWN : in STD_LOGIC;
                 JS_LEFT : in STD_LOGIC;
                 
+                BTN_ACTION1 : in STD_LOGIC;
+                BTN_ACTION2 : in STD_LOGIC;
+                BTN_MENU : in STD_LOGIC;
+                
+                MENU_OUT    : out STD_LOGIC;
+                P_ACTION1 : out STD_LOGIC;
+                P_ACTION2 : out STD_LOGIC;
+                    
                 P_GO_UP : out STD_LOGIC;
                 P_GO_RIGHT : out STD_LOGIC;
                 P_GO_DOWN : out STD_LOGIC;
@@ -77,20 +96,20 @@ architecture Behavioral of main is
     
     component display is   
         Port (  CLK_100 : in STD_LOGIC;
-            CLK_25 : in STD_LOGIC;
-            enGame : in STD_LOGIC;
-                       reset : in STD_LOGIC;
-
-            P1_UP, P1_RIGHT, P1_DOWN, P1_LEFT : in STD_LOGIC;
-            P2_UP, P2_RIGHT, P2_DOWN, P2_LEFT : in STD_LOGIC;
-            
-            endGame : out STD_LOGIC;
-            HSYNC : out STD_LOGIC;  
-            VSYNC : out STD_LOGIC;
-            
-            RED : out STD_LOGIC_VECTOR (0 to 3); 
-            GREEN : out STD_LOGIC_VECTOR (0 to 3);
-            BLUE : out STD_LOGIC_VECTOR (0 to 3));
+                CLK_25 : in STD_LOGIC;
+                enGame : in STD_LOGIC;
+                reset : in STD_LOGIC;
+    
+                P1_UP, P1_RIGHT, P1_DOWN, P1_LEFT : in STD_LOGIC;
+                P2_UP, P2_RIGHT, P2_DOWN, P2_LEFT : in STD_LOGIC;
+                
+                endGame : out STD_LOGIC;
+                HSYNC : out STD_LOGIC;  
+                VSYNC : out STD_LOGIC;
+                
+                RED : out STD_LOGIC_VECTOR (0 to 3); 
+                GREEN : out STD_LOGIC_VECTOR (0 to 3);
+                BLUE : out STD_LOGIC_VECTOR (0 to 3));
     end component display;
 
     COMPONENT FSM_gameplay is
@@ -114,6 +133,10 @@ CD1 : clk_25 port map (
     clk_25mhz => clk_25_buff
 );
 
+-- TEMPORARY TEST
+P1_ACT1 <= p1_action1_buff;
+P1_ACT2 <= p1_action2_buff;
+
 C1 : controls port map (
     CLK => CLK_100,
     
@@ -122,6 +145,14 @@ C1 : controls port map (
     JS_DOWN => JS1_DOWN,
     JS_LEFT => JS1_LEFT,
     
+    BTN_ACTION1 => BTN1_ACT1,
+    BTN_ACTION2 => BTN1_ACT2,
+    BTN_MENU => btnstart,
+    
+    MENU_OUT => p1_menu_btn,
+    P_ACTION1 => p1_action1_buff,
+    P_ACTION2 => p1_action2_buff,
+    
     P_GO_UP => c1_up_buff,
     P_GO_RIGHT => c1_right_buff,
     P_GO_DOWN => c1_down_buff,
@@ -129,6 +160,9 @@ C1 : controls port map (
     P_GO_NEUT => c1_neut_buff
 );
 
+-- TEMPORARY TEST
+P2_ACT1 <= p2_action1_buff;
+P2_ACT2 <= p2_action2_buff;
 
 -- Port map for the player 2 controls
 C2 : controls port map (
@@ -138,6 +172,14 @@ C2 : controls port map (
     JS_RIGHT => JS2_RIGHT,
     JS_DOWN => JS2_DOWN,
     JS_LEFT => JS2_LEFT,
+    
+    BTN_ACTION1 => BTN2_ACT1,
+    BTN_ACTION2 => BTN2_ACT2,
+    BTN_MENU => reset,            
+    
+    MENU_OUT => p2_menu_btn,
+    P_ACTION1 => p2_action1_buff,
+    P_ACTION2 => p2_action2_buff,
     
     P_GO_UP => c2_up_buff,
     P_GO_RIGHT => c2_right_buff,
@@ -204,9 +246,9 @@ D1 : display port map (
 );
 
 FSM : FSM_gameplay Port Map(   clk => clk_100,
-                               btnStart => btnStart,
+                               btnStart => p1_menu_btn,
                                score_saved => save,
-                               async_reset => reset,
+                               async_reset => p2_menu_btn,
                                
                                endGame => endGame_buffer,
                                
