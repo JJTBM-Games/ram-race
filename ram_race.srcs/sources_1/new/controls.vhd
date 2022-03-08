@@ -9,6 +9,12 @@ entity controls is
             JS_DOWN : in STD_LOGIC;
             JS_LEFT : in STD_LOGIC;
             
+            BTN_ACTION1 : in STD_LOGIC;
+            BTN_ACTION2 : in STD_LOGIC;
+            
+            P_ACTION1 : out STD_LOGIC;
+            P_ACTION2 : out STD_LOGIC;
+                
             P_GO_UP : out STD_LOGIC;
             P_GO_RIGHT : out STD_LOGIC;
             P_GO_DOWN : out STD_LOGIC;
@@ -25,6 +31,12 @@ architecture Behavioral of controls is
                 JS_RIGHT : in STD_LOGIC;
                 JS_DOWN : in STD_LOGIC;
                 JS_LEFT : in STD_LOGIC;
+                
+                BTN_ACTION1 : in STD_LOGIC;
+                BTN_ACTION2 : in STD_LOGIC;
+                
+                P_ACTION1 : out STD_LOGIC;
+                P_ACTION2 : out STD_LOGIC;
                 
                 P_GO_UP : out STD_LOGIC;
                 P_GO_RIGHT : out STD_LOGIC;
@@ -44,6 +56,12 @@ JC : joystick_controller port map (
     JS_RIGHT => JS_RIGHT,
     JS_DOWN => JS_DOWN,
     JS_LEFT => JS_LEFT,
+    
+    BTN_ACTION1 => BTN_ACTION1,
+    BTN_ACTION2 => BTN_ACTION2,
+                
+    P_ACTION1 => P_ACTION1,
+    P_ACTION2 => P_ACTION2,
     
     P_GO_UP => P_GO_UP,
     P_GO_RIGHT => P_GO_RIGHT,

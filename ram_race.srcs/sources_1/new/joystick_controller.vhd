@@ -9,6 +9,12 @@ entity joystick_controller is
             JS_DOWN : in STD_LOGIC;
             JS_LEFT : in STD_LOGIC;
             
+            BTN_ACTION1 : in STD_LOGIC;
+            BTN_ACTION2 : in STD_LOGIC;
+            
+            P_ACTION1 : out STD_LOGIC;
+            P_ACTION2 : out STD_LOGIC;
+            
             P_GO_UP : out STD_LOGIC;
             P_GO_RIGHT : out STD_LOGIC;
             P_GO_DOWN : out STD_LOGIC;
@@ -27,6 +33,18 @@ fetch_direction : process(CLK)
 begin
     if rising_edge(CLK) then
         if count = 200000 then
+        
+            if BTN_ACTION1 = '1' THEN
+                P_ACTION1 <= '1';
+            ELSIF BTN_ACTION1 = '0' THEN
+                P_ACTION1 <= '0';
+            END IF;
+            if BTN_ACTION2 = '1' THEN
+                P_ACTION2 <= '1';
+            ELSIF BTN_ACTION2 = '0' THEN
+                P_ACTION2 <= '0';
+            END IF;
+        
             if JS_UP = '1' then
                 direction <= "001";
             elsif JS_RIGHT = '1' then
