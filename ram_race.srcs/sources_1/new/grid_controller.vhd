@@ -227,6 +227,11 @@ end process;
 current_cell_sprite : process(CLK)
 begin
     if (rising_edge(CLK)) then
+        if( reset = '1' ) THEN
+            p1_loc <= 1130;
+            p2_loc <= 1151;
+        END IF;
+    
         -- Determine the sprite of the current cell and it's RGB values using the current cell number (minus one because array starts at zero)
         level_addra <=  std_logic_vector(to_unsigned((cellNumber - 1), 11));
         cellSpriteNumber <= to_integer(unsigned(level_douta));
@@ -511,21 +516,19 @@ begin
     end if;
 end process;
 
---gameplay : process(CLK)
---    BEGIN
---    IF(rising_edge(CLK)) THEN
---          IF (p1_loc = 300) THEN
---            endGame <= '1';
---          ELSIF (p2_loc = 301) THEN
---            endGame <= '1';
---          ELSIF (reset = '1') THEN
---            p1_loc <= 1130;
---            p2_loc <= 1151;
---            endGame <= '0';
---          else
---            endGame <= '0';
---          END IF;  
---      END IF;
---    END PROCESS;
+gameplay : process(CLK)
+    BEGIN
+    IF(rising_edge(CLK)) THEN
+          IF (p1_loc = 300) THEN
+            endGame <= '1';
+          ELSIF (p2_loc = 301) THEN
+            endGame <= '1';
+          ELSIF (reset = '1') THEN
+            endGame <= '0';
+          else
+            endGame <= '0';
+          END IF;  
+      END IF;
+    END PROCESS;
 
 end Behavioral;
