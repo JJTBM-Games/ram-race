@@ -242,14 +242,13 @@ begin
     end if;
 end process;
 
---current_cell_pixel : process(CLK_100)
---begin
---    if (rising_edge(CLK_100)) then
---        -- Magic formula don't touch
---        --cellPixel <= ((((VLOC_IN - ((cellY - 1) * CELL_HEIGHT)) + 1) * CELL_WIDTH) - (CELL_WIDTH - ((HLOC_IN - ((cellX - 1) * CELL_WIDTH)) + 1))) - 1;
---        cellPixel <= 0;
---    end if;
---end process;
+current_cell_pixel : process(CLK_100)
+begin
+    if (rising_edge(CLK_100)) then
+        -- Magic formula don't touch  
+        cellPixel <= ((((VLOC_IN - ((cellY - 1) * CELL_HEIGHT)) + 1) * CELL_WIDTH) - (CELL_WIDTH - ((HLOC_IN - ((cellX - 1) * CELL_WIDTH)) + 1))) - 1;
+    end if;
+end process;
 
 level_count_test : process(CLK_100)
 begin
@@ -268,16 +267,17 @@ begin
     end if;
 end process;
 
-current_cell_sprite : process(CLK_400)
+current_cell_sprite : process(CLK_100)
 begin
-    if (rising_edge(CLK_400)) then
+    if (rising_edge(CLK_100)) then
         if( reset = '1' ) THEN
             p1_loc <= 1130;
             p2_loc <= 1151;
         END IF;
     
-        cellPixel <= ((((VLOC_IN - ((cellY - 1) * CELL_HEIGHT)) + 1) * CELL_WIDTH) - (CELL_WIDTH - ((HLOC_IN - ((cellX - 1) * CELL_WIDTH)) + 1))) - 1;
-    
+        -- If enGame = 0 (playing) and reset (menu) = 1, than show main menu
+        -- If enGame = 1 (playing) and reset (menu) = 1, show settings
+        
         -- Determine the sprite of the current cell and it's RGB values using the current cell number (minus one because array starts at zero)
         level_addra <=  std_logic_vector(to_unsigned((cellNumber - 1), 11));
         cellSpriteNumber <= to_integer(unsigned(level_douta));
