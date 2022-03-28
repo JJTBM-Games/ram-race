@@ -30,6 +30,7 @@ end main;
 architecture Behavioral of main is
  
     signal clk_25_buff : STD_LOGIC;
+    signal clk_400_buff : STD_LOGIC;
     
     -- Buffer for the player 1 controls to player 1 ,from C1 to P1
     signal c1_up_buff, c1_right_buff, c1_down_buff, c1_left_buff, c1_neut_buff  : STD_LOGIC;
@@ -61,7 +62,8 @@ architecture Behavioral of main is
                 reset : in STD_LOGIC;
                    
                 locked : out STD_LOGIC;
-                CLK_25MHz : out STD_LOGIC);
+                CLK_25MHz : out STD_LOGIC;
+                CLK_400MHz : out STD_LOGIC);
     end component clk_25;
     
     component controls is
@@ -97,6 +99,7 @@ architecture Behavioral of main is
     component display is   
         Port (  CLK_100 : in STD_LOGIC;
                 CLK_25 : in STD_LOGIC;
+                CLK_400 : in STD_LOGIC;
                 enGame : in STD_LOGIC;
                 reset : in STD_LOGIC;
     
@@ -130,7 +133,8 @@ CD1 : clk_25 port map (
     clk_in1 => CLK_100,
     
     reset => '0',
-    clk_25mhz => clk_25_buff
+    clk_25mhz => clk_25_buff,
+    clk_400mhz => clk_400_buff
 );
 
 -- TEMPORARY TEST
@@ -222,6 +226,7 @@ P2 : player_entity port map (
 D1 : display port map (
     CLK_100 => CLK_100,
     CLK_25 => clk_25_buff,
+    CLK_400 => clk_400_buff,
     enGame => playing_buffer,
             reset => menu_buffer,
 
