@@ -40,16 +40,19 @@ architecture Behavioral of grid_controller is
     signal cellPixel : integer := 0;
     signal cellSpriteNumber : integer := 0;
     
-    signal count : integer := 0;
-    signal level_test_count : integer := 0;
+    signal level_start_count_ticks : integer := 0;
+    signal level_start_count : integer := 5;
 
     signal p1_loc : integer := 1130;       -- Starting position as default value for first level
     signal p1_allowed_up, p1_allowed_down, p1_allowed_right, p1_allowed_left : std_logic;
-    signal p1_powerup : integer := 0;
+    signal p1_mysterybox : integer := 0;
     
     signal p2_loc : integer := 1151;       -- Starting position as default value for first level
     signal p2_allowed_up, p2_allowed_down, p2_allowed_right, p2_allowed_left : std_logic;
-    signal p2_powerup : integer := 0;
+    signal p2_mysterybox : integer := 0;
+    
+    signal current_level : integer := 0;
+    signal start_level : STD_LOGIC := '0';
     
     ---------------------------
     -- Powerup locations
@@ -57,6 +60,10 @@ architecture Behavioral of grid_controller is
     
     ---------------------------
     
+    signal time_ticks : integer := 0;
+    signal time_seconds : integer := 0;
+    signal time_seconds_tens : integer := 0;
+    signal time_minutes : integer := 0;
     
     ---------------------------
     --Constants containing cell sprite number standard (sn stands for sprite number)
@@ -121,6 +128,12 @@ architecture Behavioral of grid_controller is
     constant trophy2_sn : integer := 52;
     constant trophy3_sn : integer := 53;
     constant trophy4_sn : integer := 54;
+    
+    constant time_seconds_slot : integer := 55;
+    constant time_seconds_tens_slot : integer := 56;
+    constant time_minutes_slot : integer := 57;
+    
+    constant level_slot : integer := 58;
     
     ---------------------------
     
@@ -250,36 +263,25 @@ begin
     end if;
 end process;
 
-level_count_test : process(CLK_100)
-begin
-    if (rising_edge(CLK_100)) then
-        count <= count + 1;
-        
-        if (count = 100000000) then
-            level_test_count <= level_test_count + 1;
-            
-            if (level_test_count = 3) then
-                level_test_count <= 0;
-            end if;
-            
-            count <= 0;
-        end if;
-    end if;
-end process;
-
 current_cell_sprite : process(CLK_100)
 begin
     if (rising_edge(CLK_100)) then
+        -- Resets player location (this is just for testing now, but will removed later)
         if( reset = '1' ) THEN
             p1_loc <= 1130;
             p2_loc <= 1151;
         END IF;
     
         -- If enGame = 0 (playing) and reset (menu) = 1, than show main menu
-        -- If enGame = 1 (playing) and reset (menu) = 1, show settings
+        --if (enGame = '0' AND reset = '1') then     
+        --end if;
         
-        -- Determine the sprite of the current cell and it's RGB values using the current cell number (minus one because array starts at zero)
-        level_addra <=  std_logic_vector(to_unsigned((cellNumber - 1), 11));
+        -- If enGame = 1 (playing) and reset (menu) = 1, show settings
+        --if (enGame = '1' AND reset '1') then
+        --end if;
+        
+        -- If enGame = 1 (playing) and reset (menu) = 0, show current level
+        level_addra <=  std_logic_vector(to_unsigned(cellNumber - 1, 11));
         cellSpriteNumber <= to_integer(unsigned(level_douta));
       
         if (cellSpriteNumber = border_sn) then  -- Border
@@ -510,38 +512,44 @@ begin
             font_addra <= std_logic_vector(to_unsigned(((colon_sn * 256) + cellPixel), 14));
             RGB_DATA <= font_douta; 
             
-        elsif (cellSpriteNumber = powerup_slot_sn) then -- Powerup slot
-            if (p1_powerup = 1) then
-                powerup_addra <= std_logic_vector(to_unsigned(((0 * 256) + cellPixel), 14));
-                RGB_DATA <= powerup_douta;   
-            else
-                font_addra <= std_logic_vector(to_unsigned(((question_sn * 256) + cellPixel), 14));
+        elsif (cellSpriteNumber = powerup_slot_sn) then -- Powerup slot / start count display
+            if (level_start_count /= 0) then
+                font_addra <= std_logic_vector(to_unsigned((((29 + level_start_count) * 256) + cellPixel), 14));
                 RGB_DATA <= font_douta; 
-            end if;   
-        elsif (cellSpriteNumber = 1139) then -- Mystery box
-            powerup_addra <= std_logic_vector(to_unsigned(((0 * 256) + cellPixel), 14));
-            RGB_DATA <= powerup_douta;          
-                                                                     
-        elsif (cellSpriteNumber = 10) then -- Level display
---            if (level_test_count = 0) then 
---                zero_sprite_addra <= std_logic_vector(to_unsigned((cellPixel - 1), 8));
---                RGB_DATA <= zero_sprite_douta;
---            elsif (level_test_count = 1) then
---                one_sprite_addra <= std_logic_vector(to_unsigned((cellPixel - 1), 8));
---                RGB_DATA <= one_sprite_douta;
---            elsif (level_test_count = 2) then
---                two_sprite_addra <= std_logic_vector(to_unsigned((cellPixel - 1), 8));
---                RGB_DATA <= two_sprite_douta;
---            elsif (level_test_count = 3) then
---                three_sprite_addra <= std_logic_vector(to_unsigned((cellPixel - 1), 8));
---                RGB_DATA <= three_sprite_douta;
---            end if;
-            RGB_DATA <= "101010111100";
+            else
+                if (p1_mysterybox = 1 AND cellNumber = 137) then
+                    powerup_addra <= std_logic_vector(to_unsigned(((0 * 256) + cellPixel), 14));
+                    RGB_DATA <= powerup_douta;   
+                elsif (p2_mysterybox = 1 AND cellNumber = 142) then
+                    powerup_addra <= std_logic_vector(to_unsigned(((0 * 256) + cellPixel), 14));
+                    RGB_DATA <= powerup_douta;   
+                else
+                    font_addra <= std_logic_vector(to_unsigned(((question_sn * 256) + cellPixel), 14));
+                    RGB_DATA <= font_douta; 
+                end if;   
+             end if;
+
+        -- Time display
+        elsif (cellSpriteNumber = time_seconds_slot) then
+             font_addra <= std_logic_vector(to_unsigned((((29 + time_seconds) * 256) + cellPixel), 14));
+             RGB_DATA <= font_douta; 
+        elsif (cellSpriteNumber = time_seconds_tens_slot) then
+             font_addra <= std_logic_vector(to_unsigned((((29 + time_seconds_tens) * 256) + cellPixel), 14));
+             RGB_DATA <= font_douta; 
+        elsif (cellSpriteNumber = time_minutes_slot) then
+             font_addra <= std_logic_vector(to_unsigned((((29 + time_minutes) * 256) + cellPixel), 14));
+             RGB_DATA <= font_douta; 
+             
+        -- Level display
+        elsif (cellSpriteNumber = level_slot) then
+             font_addra <= std_logic_vector(to_unsigned((((29 + current_level) * 256) + cellPixel), 14));
+             RGB_DATA <= font_douta;   
+             
         end if;
         
-        IF ( enGame = '1' ) THEN
-            
-                if (P1_UP = '1') then
+        -- Player movement
+        IF ( enGame = '1' AND level_start_count = 0) THEN
+             if (P1_UP = '1') then
                 if (p1_allowed_up = '1') then
                     p1_loc <= p1_loc - 40;
                     p1_allowed_up <= '0';
@@ -585,27 +593,75 @@ begin
                 end if;
             end if;
         END IF;
+        
+        -- Start countdown
+        if (level_start_count /= 0) then
+            level_start_count_ticks <= level_start_count_ticks + 1;
+        
+            if (level_start_count_ticks = 100000000) then
+                level_start_count <= level_start_count - 1;
+                
+                level_start_count_ticks <= 0;
+            end if; 
+        end if;
+          
+        -- Level timer
+        if (time_seconds < 10 AND level_start_count = 0) then
+            time_ticks <= time_ticks + 1;
+            
+            if (time_ticks = 100000000) then
+                time_ticks <= 0;
+            
+                if (time_seconds < 9) then
+                    time_seconds <= time_seconds + 1;
+                elsif (time_seconds = 9) then
+                    time_seconds <= 0;
+                    time_seconds_tens <= time_seconds_tens + 1;
+                end if;
+            end if;
+            
+            if (time_seconds_tens = 6) then
+                time_seconds_tens <= 0;
+                time_minutes <= time_minutes + 1;
+            end if;
+            
+            -- TODO: Check if time minutes is equel to 10, than time should be over, game will end
+        end if;
+    
+        -- Finish
+        IF (p1_loc = 298) THEN
+            current_level <= current_level + 1;
+            p1_loc <= 1130;
+            level_start_count <= 5;
+            start_level <= '0';
+            
+            time_ticks <= 0;
+            time_seconds <= 0;
+            time_seconds_tens <= 0;
+            time_minutes <= 0;
+        ELSIF (p2_loc = 303) THEN
+            current_level <= current_level + 1;
+            p2_loc <= 1151;
+            level_start_count <= 5;
+            start_level <= '0';
+            
+            time_ticks <= 0;
+            time_seconds <= 0;
+            time_seconds_tens <= 0;
+            time_minutes <= 0;
+            
+        -- Powerups
+        ELSIF (p1_loc = 1139) THEN
+            mb_loc1 <= -1; -- Remove mysterybox from map
+            p1_mysterybox <= 1;
+            
+        -- Reset  
+        ELSIF (reset = '1') THEN
+            endGame <= '0';
+        else
+            endGame <= '0';
+        END IF;  
     end if;
 end process;
 
-gameplay : process(CLK_100)
-    BEGIN
-    IF(rising_edge(CLK_100)) THEN
-          -- Finish
-          IF (p1_loc = 298) THEN
-            endGame <= '1';
-          ELSIF (p2_loc = 303) THEN
-            endGame <= '1';
-            
-          -- Powerups
-          ELSIF (p1_loc = 1139) THEN
-            mb_loc1 <= -1;
-            p1_powerup <= 1;
-          ELSIF (reset = '1') THEN
-            endGame <= '0';
-          else
-            endGame <= '0';
-          END IF;  
-      END IF;
-    END PROCESS;
 end Behavioral;
