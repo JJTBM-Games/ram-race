@@ -44,6 +44,7 @@ architecture Behavioral of display is
     component grid_controller is
         Port ( CLK_100 : in STD_LOGIC;
                CLK_400 : in STD_LOGIC;
+               CLK_25 : in STD_LOGIC;
            
                enGame : in STD_LOGIC;
                reset : in STD_LOGIC;
@@ -92,6 +93,7 @@ DC: display_controller port map (
 GC: grid_controller port map (
     CLK_100 => CLK_100,
     CLK_400 => CLK_400,
+    CLK_25 => CLK_25,
     
     enGame => enGame,
     reset => reset,

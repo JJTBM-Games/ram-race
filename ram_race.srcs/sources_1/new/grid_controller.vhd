@@ -7,6 +7,7 @@ use IEEE.STD_LOGIC_UNSigned.ALL;
 entity grid_controller is
     Port ( CLK_100 : in STD_LOGIC;
            CLK_400 : in STD_LOGIC;
+           CLK_25 : in STD_LOGIC;
            
            enGame : in STD_LOGIC;
            reset : in STD_LOGIC;
@@ -70,15 +71,15 @@ architecture Behavioral of grid_controller is
     signal counter_lazers : integer := 0;
     signal lazer_tick : STD_LOGIC := '0';
     
-    signal lazer_up : integer := 0;
-    signal lazer_down : integer := 0;
-    signal lazer_left : integer := 0;
-    signal lazer_right : integer := 0;
-    
     constant npc_up_loc : integer := 733;
     constant npc_down_loc : integer := 257;
     constant npc_left_loc : integer := 459;
     constant npc_right_loc : integer := 727;
+    
+    constant npc2_up_loc : integer := 748;
+    constant npc2_down_loc : integer := 264;
+    constant npc2_left_loc : integer := 754;
+    constant npc2_right_loc : integer := 462;
     
     ---------------------------
     --Constants containing cell sprite number standard (sn stands for sprite number)
@@ -505,6 +506,72 @@ begin
                 else
                 RGB_DATA <= "000010100010";
                 end if;
+            elsif (cellNumber = npc2_up_loc - 40) then
+                if lazer_tick = '1' then
+                RGB_DATA <= "111100000000";
+                else
+                RGB_DATA <= "000010100010";
+                end if;
+            elsif (cellNumber = npc2_up_loc - 80) then
+                if lazer_tick = '1' then
+                RGB_DATA <= "111100000000";
+                else
+                RGB_DATA <= "000010100010";
+                end if;
+            elsif (cellNumber = npc2_up_loc - 120) then
+                if lazer_tick = '1' then
+                RGB_DATA <= "111100000000";
+                else
+                RGB_DATA <= "000010100010";
+                end if;
+            elsif (cellNumber = npc2_down_loc + 40) then
+                if lazer_tick = '1' then
+                RGB_DATA <= "111100000000";
+                else
+                RGB_DATA <= "000010100010";
+                end if;
+            elsif (cellNumber = npc2_down_loc + 80) then
+                if lazer_tick = '1' then
+                RGB_DATA <= "111100000000";
+                else
+                RGB_DATA <= "000010100010";
+                end if;
+            elsif (cellNumber = npc2_down_loc + 120) then
+                if lazer_tick = '1' then
+                RGB_DATA <= "111100000000";
+                else
+                RGB_DATA <= "000010100010";
+                end if;
+            elsif (cellNumber = npc2_right_loc + 1) then
+                if lazer_tick = '1' then
+                RGB_DATA <= "111100000000";
+                else
+                RGB_DATA <= "000010100010";
+                end if;
+            elsif (cellNumber = npc2_right_loc + 2) then
+                if lazer_tick = '1' then
+                RGB_DATA <= "111100000000";
+                else
+                RGB_DATA <= "000010100010";
+                end if;
+            elsif (cellNumber = npc2_right_loc + 3) then
+                if lazer_tick = '1' then
+                RGB_DATA <= "111100000000";
+                else
+                RGB_DATA <= "000010100010";
+                end if;
+            elsif (cellNumber = npc2_left_loc - 1) then
+                if lazer_tick = '1' then
+                RGB_DATA <= "111100000000";
+                else
+                RGB_DATA <= "000010100010";
+                end if;
+            elsif (cellNumber = npc2_left_loc - 2) then
+                if lazer_tick = '1' then
+                RGB_DATA <= "111100000000";
+                else
+                RGB_DATA <= "000010100010";
+                end if;
             else
                 RGB_DATA <= "000010100010"; -- Player is not on floor
             end if;
@@ -780,6 +847,7 @@ begin
         IF (p1_loc = 298) THEN
             current_level <= current_level + 1;
             p1_loc <= 1130;
+            p2_loc <= 1151;
             level_start_count <= 5;
             start_level <= '0';
             
@@ -789,6 +857,7 @@ begin
             time_minutes <= 0;
         ELSIF (p2_loc = 303) THEN
             current_level <= current_level + 1;
+            p1_loc <= 1130;
             p2_loc <= 1151;
             level_start_count <= 5;
             start_level <= '0';
@@ -827,6 +896,26 @@ begin
         WHEN npc_right_loc | (npc_right_loc + 1) | (npc_right_loc + 2) | (npc_right_loc + 3) =>
             if lazer_tick = '1' then
                 p1_loc <= 1130;
+            end if;
+        WHEN OTHERS => 
+        END CASE; 
+        
+        CASE p2_loc IS
+        WHEN npc2_down_loc | (npc2_down_loc + 40) | (npc2_down_loc + 80) | (npc2_down_loc + 120) =>
+            if lazer_tick = '1' then
+                p2_loc <= 1151;
+            end if;
+        WHEN npc2_up_loc | (npc2_up_loc - 40) | (npc2_up_loc - 80) | (npc2_up_loc - 120) =>
+            if lazer_tick = '1' then
+                p2_loc <= 1151;
+            end if;
+        WHEN npc2_left_loc | (npc2_left_loc - 1) | (npc2_left_loc - 2) | (npc2_left_loc - 3) =>
+            if lazer_tick = '1' then
+                p2_loc <= 1151;
+            end if;
+        WHEN npc2_right_loc | (npc2_right_loc + 1) | (npc2_right_loc + 2) | (npc2_right_loc + 3) =>
+            if lazer_tick = '1' then
+                p2_loc <= 1151;
             end if;
         WHEN OTHERS => 
         END CASE;  

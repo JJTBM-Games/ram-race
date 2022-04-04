@@ -26,7 +26,7 @@ begin
 fetch_direction : process(CLK)
 begin
     if rising_edge(CLK) then
-        if count = 200000 then
+        if count = 100000 then
         
         if JS_UP = '1' then
             direction <= "001";
