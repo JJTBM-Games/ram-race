@@ -149,6 +149,13 @@ architecture Behavioral of grid_controller is
     constant time_seconds_tens_slot : integer := 56;
     constant time_minutes_slot : integer := 57;
     
+    constant cloud : integer := 63; -- #000000
+    constant sun_orange : integer := 64; -- #FF9900
+    constant sun_yellow : integer := 65; -- #FFDD33
+    constant green : integer := 66;
+    constant dark_grey : integer := 67;
+    constant salmon : integer := 68;
+    
     constant level_slot : integer := 58;
     
     constant npc_down : integer := 59;
@@ -169,6 +176,17 @@ architecture Behavioral of grid_controller is
                 addra : IN STD_LOGIC_VECTOR(10 DOWNTO 0);
                 douta : OUT STD_LOGIC_VECTOR(30 DOWNTO 0));    
     end component level;
+    
+    signal menu_addra : STD_LOGIC_VECTOR( 10 downto 0 );
+    signal menu_douta : STD_LOGIC_VECTOR( 30 downto 0 );
+   
+    component start_screen is
+            port (
+                clka : IN STD_LOGIC;
+                ena : IN STD_LOGIC;
+                addra : IN STD_LOGIC_VECTOR(10 DOWNTO 0);
+                douta : OUT STD_LOGIC_VECTOR(30 DOWNTO 0));    
+    end component start_screen;
     
     signal font_addra : STD_LOGIC_VECTOR(13 downto 0);
     signal font_douta : STD_LOGIC_VECTOR(11 downto 0);
@@ -234,6 +252,14 @@ levels : level port map(
     
     addra => level_addra,
     douta => level_douta
+  );
+  
+menu : start_screen port map(
+    clka => CLK_400,
+    ena => '1',
+    
+    addra => menu_addra,
+    douta => menu_douta
   );
   
 font : font_sprites port map (
@@ -314,17 +340,16 @@ begin
         END IF;
     
         -- If enGame = 0 (playing) and reset (menu) = 1, than show main menu
-        --if (enGame = '0' AND reset = '1') then     
-        --end if;
-        
+        if (enGame = '0' AND reset = '1') then     
+            menu_addra <=  std_logic_vector(to_unsigned(cellNumber - 1, 11));
+            cellSpriteNumber <= to_integer(unsigned(menu_douta));
         -- If enGame = 1 (playing) and reset (menu) = 1, show settings
         --if (enGame = '1' AND reset '1') then
         --end if;
-        
-        -- If enGame = 1 (playing) and reset (menu) = 0, show current level
+        elsif (enGame = '1' AND reset = '0') then -- If enGame = 1 (playing) and reset (menu) = 0, show current level
         level_addra <=  std_logic_vector(to_unsigned(cellNumber - 1, 11));
         cellSpriteNumber <= to_integer(unsigned(level_douta));
-      
+        end if;
         if (cellSpriteNumber = border_sn) then  -- Border
             if (cellNumber = p1_loc - 40) then
                 p1_allowed_up <= '0';
@@ -757,6 +782,18 @@ begin
         elsif (cellSpriteNumber = level_slot) then
              font_addra <= std_logic_vector(to_unsigned((((29 + current_level) * 256) + cellPixel), 14));
              RGB_DATA <= font_douta;
+        elsif (cellSpriteNumber = cloud) then
+            RGB_DATA <= "111111111111";
+        elsif (cellSpriteNumber = sun_orange) then
+            RGB_DATA <= "111110010000";
+        elsif (cellSpriteNumber = sun_yellow) then
+            RGB_DATA <= "111111010011";
+        elsif (cellSpriteNumber = green) then
+            RGB_DATA <= "000010100010";
+        elsif (cellSpriteNumber = dark_grey) then
+            RGB_DATA <= "011001100110";
+        elsif (cellSpriteNumber = salmon) then
+            RGB_DATA <= "111110000111";  
         end if;
         
         -- Player movement
