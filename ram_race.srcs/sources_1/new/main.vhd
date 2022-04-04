@@ -12,7 +12,11 @@ entity main is
             
             -- State inputs
             btnStart, save, reset : in STD_LOGIC;
-
+            
+            sfx_mute : in STD_LOGIC;
+            msc_mute: in STD_LOGIC;
+            mute : in STD_LOGIC;
+           
             -- Action button test
             P1_ACT1, P1_ACT2 : out STD_LOGIC;
             
@@ -24,7 +28,10 @@ entity main is
             
             RED : out STD_LOGIC_VECTOR (0 to 3); 
             GREEN : out STD_LOGIC_VECTOR (0 to 3);
-            BLUE : out STD_LOGIC_VECTOR (0 to 3));
+            BLUE : out STD_LOGIC_VECTOR (0 to 3);
+            
+            msc_out : out STD_LOGIC;
+            sfx_out : out STD_LOGIC );
 end main;
 
 architecture Behavioral of main is
@@ -65,6 +72,17 @@ architecture Behavioral of main is
                 CLK_25MHz : out STD_LOGIC;
                 CLK_400MHz : out STD_LOGIC);
     end component clk_25;
+    
+    COMPONENT sound is
+    Port ( msc_out : out STD_LOGIC;
+            sfx_out : out STD_LOGIC;
+           clk_in : in STD_LOGIC;
+           en : in STD_LOGIC;
+           sfx_mute : in STD_LOGIC;
+           msc_mute: in STD_LOGIC;
+           mute : in STD_LOGIC
+           );
+    end COMPONENT sound;
     
     component controls is
         Port (  CLK : in STD_LOGIC;
@@ -262,4 +280,13 @@ FSM : FSM_gameplay Port Map(   clk => clk_100,
                                playing_out => playing_buffer,
                                save_score_out => score_buffer);
 
+S: sound Port Map( msc_out => msc_out,
+            sfx_out => sfx_out,
+           clk_in => CLK_100,
+           en => '1',
+           sfx_mute => sfx_mute,
+           msc_mute => msc_mute,
+           mute => mute
+           );
+           
 end Behavioral;
