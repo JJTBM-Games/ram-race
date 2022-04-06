@@ -11,11 +11,14 @@ entity grid_controller is
            
            enGame : in STD_LOGIC;
            reset : in STD_LOGIC;
-           
+           show_score : in STD_LOGIC;
+           show_name : in STD_LOGIC;
+                
            HLOC_IN : in integer; 
            VLOC_IN : in integer;
            
            endGame : out STD_LOGIC;
+           selection : out STD_LOGIC;
            
            P1_UP, P1_RIGHT, P1_DOWN, P1_LEFT : in STD_LOGIC;
            P2_UP, P2_RIGHT, P2_DOWN, P2_LEFT : in STD_LOGIC;
@@ -100,7 +103,17 @@ architecture Behavioral of grid_controller is
     signal damage_p2 : STD_LOGIC := '0';
     
     ---------------------------
-    --
+    --start screen selector
+    
+    signal sel_position : STD_LOGIC := '1';
+    
+    ---------------------------
+    -- Name selector
+    
+    signal L11, L12, L13, L14 : integer := 0; -- p1
+    signal L21, L22, L23, L24 : integer := 0; -- p2
+    signal selected1, selected2 : STD_LOGIC_VECTOR( 2 downto 0) := "000";
+
     ---------------------------
     --Constants containing cell sprite number standard (sn stands for sprite number)
     
@@ -186,6 +199,16 @@ architecture Behavioral of grid_controller is
     constant npc_right : integer := 61;
     constant npc_up : integer := 62;
     
+    constant name1_1 : integer := 71;
+    constant name1_2 : integer := 72;
+    constant name1_3 : integer := 73;
+    constant name1_4 : integer := 74;
+    constant name2_1 : integer := 75;
+    constant name2_2 : integer := 76;
+    constant name2_3 : integer := 77;
+    constant name2_4 : integer := 78;
+    
+    constant checkmark : integer := 79; 
     ---------------------------
     
     
@@ -210,6 +233,17 @@ architecture Behavioral of grid_controller is
                 addra : IN STD_LOGIC_VECTOR(10 DOWNTO 0);
                 douta : OUT STD_LOGIC_VECTOR(30 DOWNTO 0));    
     end component start_screen;
+    
+    signal name_addra : STD_LOGIC_VECTOR( 10 downto 0 );
+    signal name_douta : STD_LOGIC_VECTOR( 30 downto 0 );
+   
+    component set_name_sprite is
+            port (
+                clka : IN STD_LOGIC;
+                ena : IN STD_LOGIC;
+                addra : IN STD_LOGIC_VECTOR(10 DOWNTO 0);
+                douta : OUT STD_LOGIC_VECTOR(30 DOWNTO 0));    
+    end component set_name_sprite;
     
     signal font_addra : STD_LOGIC_VECTOR(13 downto 0);
     signal font_douta : STD_LOGIC_VECTOR(11 downto 0);
@@ -269,6 +303,8 @@ architecture Behavioral of grid_controller is
     
 begin
 
+selection <= sel_position;
+
 levels : level port map(
     clka => CLK_400,
     ena => '1',
@@ -283,6 +319,14 @@ menu : start_screen port map(
     
     addra => menu_addra,
     douta => menu_douta
+  );
+ 
+set_name : set_name_sprite port map(
+    clka => CLK_400,
+    ena => '1',
+    
+    addra => name_addra,
+    douta => name_douta
   );
   
 font : font_sprites port map (
@@ -366,6 +410,17 @@ begin
         if (enGame = '0' AND reset = '1') then     
             menu_addra <=  std_logic_vector(to_unsigned(cellNumber - 1, 11));
             cellSpriteNumber <= to_integer(unsigned(menu_douta));
+            if ( p1_up = '1' ) then
+                sel_position <= '0';
+            elsif ( p1_down = '1') then
+                sel_position <= '1';
+            end if;
+        elsif (show_score = '1') then
+        
+        elsif (show_name = '1') then
+            name_addra <=  std_logic_vector(to_unsigned(cellNumber - 1, 11));
+            cellSpriteNumber <= to_integer(unsigned(name_douta));
+        
         -- If enGame = 1 (playing) and reset (menu) = 1, show settings
         --if (enGame = '1' AND reset '1') then
         --end if;
@@ -373,6 +428,8 @@ begin
         level_addra <=  std_logic_vector(to_unsigned(cellNumber - 1, 11));
         cellSpriteNumber <= to_integer(unsigned(level_douta));
         end if;
+        
+        
         if (cellSpriteNumber = border_sn) then  -- Border
             if (cellNumber = p1_loc - 40) then
                 p1_allowed_up <= '0';
@@ -772,7 +829,20 @@ begin
         elsif (cellSpriteNumber = colon_sn) then -- Colon
             font_addra <= std_logic_vector(to_unsigned(((colon_sn * 256) + cellPixel), 14));
             RGB_DATA <= font_douta; 
-            
+        elsif ( cellSpriteNumber = sel_highscore) then
+            if ( sel_position = '0' ) then
+                font_addra <= std_logic_vector(to_unsigned(((exclamation_sn * 256) + cellPixel), 14));
+                RGB_DATA <= font_douta;
+            else
+            RGB_DATA <= "101010111100";
+            end if;
+        elsif ( cellSpriteNumber = sel_start) then
+            if ( sel_position = '1' ) then
+                font_addra <= std_logic_vector(to_unsigned(((exclamation_sn * 256) + cellPixel), 14));
+                RGB_DATA <= font_douta;
+            else
+            RGB_DATA <= "101010111100";
+            end if;
         elsif (cellSpriteNumber = powerup_slot_sn) then -- Powerup slot / start count display
             if (level_start_count /= 0) then
                 font_addra <= std_logic_vector(to_unsigned((((29 + level_start_count) * 256) + cellPixel), 14));
@@ -846,7 +916,34 @@ begin
         elsif (cellSpriteNumber = dark_grey) then
             RGB_DATA <= "011001100110";
         elsif (cellSpriteNumber = salmon) then
-            RGB_DATA <= "111110000111";  
+            RGB_DATA <= "111110000111";
+        elsif (cellSpriteNumber = name1_1) then
+            font_addra <= std_logic_vector(to_unsigned(((L11 * 256) + cellPixel), 14));
+            RGB_DATA <= font_douta;
+        elsif (cellSpriteNumber = name1_2) then
+            font_addra <= std_logic_vector(to_unsigned(((L12 * 256) + cellPixel), 14));
+            RGB_DATA <= font_douta;
+        elsif (cellSpriteNumber = name1_3) then
+            font_addra <= std_logic_vector(to_unsigned(((L13 * 256) + cellPixel), 14));
+            RGB_DATA <= font_douta;
+        elsif (cellSpriteNumber = name1_4) then
+            font_addra <= std_logic_vector(to_unsigned(((L14 * 256) + cellPixel), 14));
+            RGB_DATA <= font_douta;
+        elsif (cellSpriteNumber = name2_1) then
+            font_addra <= std_logic_vector(to_unsigned(((L21 * 256) + cellPixel), 14));
+            RGB_DATA <= font_douta;
+        elsif (cellSpriteNumber = name2_2) then
+            font_addra <= std_logic_vector(to_unsigned(((L22 * 256) + cellPixel), 14));
+            RGB_DATA <= font_douta;
+        elsif (cellSpriteNumber = name2_3) then
+            font_addra <= std_logic_vector(to_unsigned(((L23 * 256) + cellPixel), 14));
+            RGB_DATA <= font_douta;
+        elsif (cellSpriteNumber = name2_4) then
+            font_addra <= std_logic_vector(to_unsigned(((L24 * 256) + cellPixel), 14));
+            RGB_DATA <= font_douta;
+        elsif (cellSpriteNumber = checkmark) then
+            font_addra <= std_logic_vector(to_unsigned(((40 * 256) + cellPixel), 14));
+            RGB_DATA <= font_douta;
         end if;
         
         -- Player movement
@@ -929,9 +1026,6 @@ begin
             
             -- TODO: Check if time minutes is equal to 10, than time should be over, game will end
         end if;
-    
-    
-    
         
         -- Finish
         IF (p1_loc = 298) THEN
@@ -1040,11 +1134,7 @@ begin
                 damage_p2 <= '0';
             end if;
         end if;
-            
---    signal npc_up_loc     : integer := 733;
---    signal npc_down_loc   : integer := 257;
---    signal npc_left_loc   : integer := 459;
---    signal npc_right_loc  : integer := 727;
+
     end if;
 end process;
 
@@ -1080,13 +1170,6 @@ playerCounter : process(clk_100)
             end case;
         end if;
     end process;
-
---playerDamage : process(clk_100)
---    begin
---        if ( rising_edge(clk_100) ) then
-            
---        end if;
---    end process;
     
 playerAnimation : process(clk_100)
     begin
@@ -1103,4 +1186,168 @@ playerAnimation : process(clk_100)
         end if;
     end process;
     
+nameSelector : process(clk_100)
+    begin
+        if( rising_edge(clk_100) ) then
+            if( P1_UP = '1' ) then
+                case selected1 is
+                    when "000" =>
+                        if ( L11 = 25 ) then
+                            L11 <= 0;
+                        else
+                            L11 <= L11 + 1;
+                        end if;
+                    when "001" =>
+                        if ( L12 = 25 ) then
+                            L12 <= 0;
+                        else
+                            L12 <= L12 + 1;
+                        end if;
+                    when "010" =>
+                        if ( L13 = 25 ) then
+                            L13 <= 0;
+                        else
+                            L13 <= L13 + 1;
+                        end if;
+                    when "011" =>
+                        if ( L14 = 25 ) then
+                            L14 <= 0;
+                        else
+                            L14 <= L14 + 1;
+                        end if;
+                    when others =>
+                        L11 <= L11;
+                        L12 <= L12;
+                        L13 <= L13;
+                        L14 <= L14;
+                end case;
+            
+            elsif( P1_down = '1' ) then
+                case selected1 is
+                    when "000" =>
+                        if ( L11 = 0 ) then
+                            L11 <= 25;
+                        else
+                            L11 <= L11 - 1;
+                        end if;
+                    when "001" =>
+                        if ( L12 = 0 ) then
+                            L12 <= 25;
+                        else
+                            L12 <= L12 - 1;
+                        end if;
+                    when "010" =>
+                        if ( L13 = 0 ) then
+                            L13 <= 25;
+                        else
+                            L13 <= L13 - 1;
+                        end if;
+                    when "011" =>
+                        if ( L14 = 0 ) then
+                            L14 <= 25;
+                        else
+                            L14 <= L14 - 1;
+                        end if;
+                    when others =>
+                        L11 <= L11;
+                        L12 <= L12;
+                        L13 <= L13;
+                        L14 <= L14;
+                end case;
+            elsif( P1_right = '1' ) then
+                if ( selected1 = "100" ) then
+                    selected1 <= "000";
+                else
+                    selected1 <= selected1 + 1;
+                end if;
+            elsif( P1_left = '1' ) then
+                if ( selected1 = "000" ) then
+                    selected1 <= "100";
+                else
+                    selected1 <= selected1 - 1;
+                end if;
+
+            
+            end if;
+            if( P2_UP = '1' ) then
+                case selected2 is
+                    when "000" =>
+                        if ( L21 = 25 ) then
+                            L21 <= 0;
+                        else
+                            L21 <= L21 + 1;
+                        end if;
+                    when "001" =>
+                        if ( L22 = 25 ) then
+                            L22 <= 0;
+                        else
+                            L22 <= L22 + 1;
+                        end if;
+                    when "010" =>
+                        if ( L23 = 25 ) then
+                            L23 <= 0;
+                        else
+                            L23 <= L23 + 1;
+                        end if;
+                    when "011" =>
+                        if ( L24 = 25 ) then
+                            L24 <= 0;
+                        else
+                            L24 <= L24 + 1;
+                        end if;
+                    when others =>
+                        L21 <= L21;
+                        L22 <= L22;
+                        L23 <= L23;
+                        L24 <= L24;
+                end case;
+            elsif( P2_down = '1' ) then
+                case selected2 is
+                    when "000" =>
+                        if ( L21 = 0 ) then
+                            L21 <= 25;
+                        else
+                            L21 <= L21 - 1;
+                        end if;
+                    when "001" =>
+                        if ( L22 = 0 ) then
+                            L22 <= 25;
+                        else
+                            L22 <= L22 - 1;
+                        end if;
+                    when "010" =>
+                        if ( L23 = 0 ) then
+                            L23 <= 25;
+                        else
+                            L23 <= L23 - 1;
+                        end if;
+                    when "011" =>
+                        if ( L24 = 0 ) then
+                            L24 <= 25;
+                        else
+                            L24 <= L24 - 1;
+                        end if;
+                    when others =>
+                        L21 <= L21;
+                        L22 <= L22;
+                        L23 <= L23;
+                        L24 <= L24;
+                end case;
+            elsif( P2_right = '1' ) then
+                if ( selected2 = "100" ) then
+                    selected2 <= "000";
+                else
+                    selected2 <= selected2 + 1;
+                end if;
+            elsif( P2_left = '1' ) then
+                if ( selected2 = "000" ) then
+                    selected2 <= "100";
+                else
+                    selected2 <= selected2 - 1;
+                end if;
+
+            
+            end if;
+        end if;
+    end process;    
 end Behavioral;

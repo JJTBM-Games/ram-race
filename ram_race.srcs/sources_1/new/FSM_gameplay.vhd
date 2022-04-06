@@ -37,7 +37,8 @@ entity FSM_gameplay is
            score_saved      : in STD_LOGIC;
            async_reset      : in STD_LOGIC;
            endGame          : in STD_LOGIC;
-           
+           selection        : in STD_LOGIC;
+           score_out        : out STD_LOGIC;
            menu_out         : out STD_LOGIC;
            name_out         : out STD_LOGIC;
            playing_out      : out STD_LOGIC;
@@ -46,7 +47,7 @@ end FSM_gameplay;
 
 architecture Behavioral of FSM_gameplay is
 
-TYPE game_state IS (menu, starting, set_name, playing, save_score);
+TYPE game_state IS (menu, starting, set_name, playing, save_score, show_score);
 
 SIGNAL state, next_state : game_state;
 
@@ -71,8 +72,14 @@ NSL : process (state)
                 name_out <= '0';
                 playing_out <= '0';
                 save_score_out <= '0';
+                score_out <= '0';
+
                     if (btnStart = '1') THEN
-                       next_state <= starting; 
+                        if (selection = '1') then
+                            next_state <= starting; 
+                        else
+                            next_state <= show_score;
+                        end if;
                     ELSE
                         next_state <= state;
                     END IF;
@@ -107,6 +114,12 @@ NSL : process (state)
                     ELSE 
                         next_state <= state;
                     END IF;
+            WHEN show_score => 
+                menu_out <= '0';
+                score_out <= '1';
+                if (btnStart = '1') then
+                    next_state <= menu; 
+                end if;
         END CASE;        
     end process NSL;
 
