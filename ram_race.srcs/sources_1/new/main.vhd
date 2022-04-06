@@ -62,6 +62,8 @@ architecture Behavioral of main is
     
     -- State output buffers
     SIGNAL menu_buffer, name_buffer, playing_buffer, score_buffer : STD_LOGIC;
+    
+    SIGNAL selection_s, score_s : STD_LOGIC;
 
     -- 25Mhz clock prescaler mainly for the VGA controller
     component clk_25 is
@@ -120,7 +122,8 @@ architecture Behavioral of main is
                 CLK_400 : in STD_LOGIC;
                 enGame : in STD_LOGIC;
                 reset : in STD_LOGIC;
-    
+                show_score : in STD_LOGIC;
+                show_name : in STD_LOGIC;
                 P1_UP, P1_RIGHT, P1_DOWN, P1_LEFT : in STD_LOGIC;
                 P2_UP, P2_RIGHT, P2_DOWN, P2_LEFT : in STD_LOGIC;
                 
@@ -128,6 +131,8 @@ architecture Behavioral of main is
                 HSYNC : out STD_LOGIC;  
                 VSYNC : out STD_LOGIC;
                 
+                selection : out STD_LOGIC;
+
                 RED : out STD_LOGIC_VECTOR (0 to 3); 
                 GREEN : out STD_LOGIC_VECTOR (0 to 3);
                 BLUE : out STD_LOGIC_VECTOR (0 to 3));
@@ -139,7 +144,8 @@ architecture Behavioral of main is
            score_saved      : in STD_LOGIC;
            async_reset      : in STD_LOGIC;
            endGame          : in STD_LOGIC;
-           
+           selection        : in STD_LOGIC;
+           score_out        : out STD_LOGIC;
            menu_out         : out STD_LOGIC;
            name_out         : out STD_LOGIC;
            playing_out      : out STD_LOGIC;
@@ -246,8 +252,9 @@ D1 : display port map (
     CLK_25 => clk_25_buff,
     CLK_400 => clk_400_buff,
     enGame => playing_buffer,
-            reset => menu_buffer,
-
+    reset => menu_buffer,
+    show_score => score_s,
+    show_name => name_buffer,
     P1_UP => p1_up_buff,
     P1_RIGHT => p1_right_buff,
     P1_DOWN => p1_down_buff,
@@ -259,6 +266,8 @@ D1 : display port map (
     P2_LEFT => p2_left_buff,
     
     endGame => endGame_buffer,
+    
+    selection => selection_s,
     
     HSYNC =>  HSYNC,
     VSYNC =>  VSYNC,
@@ -274,7 +283,9 @@ FSM : FSM_gameplay Port Map(   clk => clk_100,
                                async_reset => p2_menu_btn,
                                
                                endGame => endGame_buffer,
+                               selection => selection_s,
                                
+                               score_out => score_s,
                                menu_out => menu_buffer,
                                name_out => name_buffer,
                                playing_out => playing_buffer,
