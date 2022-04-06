@@ -19,6 +19,7 @@ entity grid_controller is
            
            endGame : out STD_LOGIC;
            selection : out STD_LOGIC;
+           both_ok : out STD_LOGIC;
            
            P1_UP, P1_RIGHT, P1_DOWN, P1_LEFT : in STD_LOGIC;
            P2_UP, P2_RIGHT, P2_DOWN, P2_LEFT : in STD_LOGIC;
@@ -128,6 +129,8 @@ architecture Behavioral of grid_controller is
     signal L11, L12, L13, L14 : integer := 0; -- p1
     signal L21, L22, L23, L24 : integer := 0; -- p2
     signal selected1, selected2 : STD_LOGIC_VECTOR( 2 downto 0) := "000";
+    signal cursor1 : integer := 375;
+    signal cursor2 : integer := 382;
 
     ---------------------------
     --Constants containing cell sprite number standard (sn stands for sprite number)
@@ -430,7 +433,19 @@ begin
         END IF;
     
         -- If enGame = 0 (playing) and reset (menu) = 1, than show main menu
-        if (enGame = '0' AND reset = '1') then     
+        if (enGame = '0' AND reset = '1') then   
+--            L11 <=  0;
+--            L12 <=  0;
+--            L13 <=  0; 
+--            L14 <=  0; -- p1
+--            L21 <=  0;
+--            L22 <=  0;
+--            L23 <=  0;
+--            L24 <= 0; -- p2
+--            selected1 <= "000";
+--            selected2 <= "000";
+--            cursor1 <= 375;
+--            cursor2 <= 382;
             menu_addra <=  std_logic_vector(to_unsigned(cellNumber - 1, 11));
             cellSpriteNumber <= to_integer(unsigned(menu_douta));
             if ( p1_up = '1' ) then
@@ -505,11 +520,22 @@ begin
             RGB_DATA <= "000010011111";
             
         elsif (cellSpriteNumber = gray_sn) then -- Gray
-            RGB_DATA <= "101010111100";
+        if (show_name = '1') then
+                if (cellNumber = cursor1) then
+                    font_addra <= std_logic_vector(to_unsigned(((39 * 256) + cellPixel), 14));
+                    RGB_DATA <= font_douta;
+                elsif (cellNumber = cursor2) then
+                    font_addra <= std_logic_vector(to_unsigned(((39 * 256) + cellPixel), 14));
+                    RGB_DATA <= font_douta;
+                else
+                    RGB_DATA <= "101010111100";
+                end if;
+            else
+                RGB_DATA <= "101010111100";
+            end if;
             
         elsif (cellSpriteNumber = sky_sn) then -- Sky
             RGB_DATA <= "101011011111";
-            
         elsif (cellSpriteNumber = wood_sn) then -- Wood
             RGB_DATA <= "010100110000";  
             
@@ -1102,6 +1128,7 @@ begin
         END IF;
         
         -- Start countdown
+        if( enGame = '1') then
         if (level_start_count /= 0) then
             level_start_count_ticks <= level_start_count_ticks + 1;
         
@@ -1110,6 +1137,7 @@ begin
                 
                 level_start_count_ticks <= 0;
             end if; 
+        end if;
         end if;
         
         -- Shield timers
@@ -1394,164 +1422,191 @@ playerAnimation : process(clk_100)
 nameSelector : process(clk_100)
     begin
         if( rising_edge(clk_100) ) then
-            if( P1_UP = '1' ) then
-                case selected1 is
-                    when "000" =>
-                        if ( L11 = 25 ) then
-                            L11 <= 0;
-                        else
-                            L11 <= L11 + 1;
-                        end if;
-                    when "001" =>
-                        if ( L12 = 25 ) then
-                            L12 <= 0;
-                        else
-                            L12 <= L12 + 1;
-                        end if;
-                    when "010" =>
-                        if ( L13 = 25 ) then
-                            L13 <= 0;
-                        else
-                            L13 <= L13 + 1;
-                        end if;
-                    when "011" =>
-                        if ( L14 = 25 ) then
-                            L14 <= 0;
-                        else
-                            L14 <= L14 + 1;
-                        end if;
-                    when others =>
-                        L11 <= L11;
-                        L12 <= L12;
-                        L13 <= L13;
-                        L14 <= L14;
-                end case;
-            
-            elsif( P1_down = '1' ) then
-                case selected1 is
-                    when "000" =>
-                        if ( L11 = 0 ) then
-                            L11 <= 25;
-                        else
-                            L11 <= L11 - 1;
-                        end if;
-                    when "001" =>
-                        if ( L12 = 0 ) then
-                            L12 <= 25;
-                        else
-                            L12 <= L12 - 1;
-                        end if;
-                    when "010" =>
-                        if ( L13 = 0 ) then
-                            L13 <= 25;
-                        else
-                            L13 <= L13 - 1;
-                        end if;
-                    when "011" =>
-                        if ( L14 = 0 ) then
-                            L14 <= 25;
-                        else
-                            L14 <= L14 - 1;
-                        end if;
-                    when others =>
-                        L11 <= L11;
-                        L12 <= L12;
-                        L13 <= L13;
-                        L14 <= L14;
-                end case;
-            elsif( P1_right = '1' ) then
-                if ( selected1 = "100" ) then
-                    selected1 <= "000";
-                else
-                    selected1 <= selected1 + 1;
+            if ( show_name = '1' ) then
+                if( P1_UP = '1' ) then
+                    case selected1 is
+                        when "000" =>
+                            if ( L11 = 25 ) then
+                                L11 <= 0;
+                            else
+                                L11 <= L11 + 1;
+                            end if;
+                        when "001" =>
+                            if ( L12 = 25 ) then
+                                L12 <= 0;
+                            else
+                                L12 <= L12 + 1;
+                            end if;
+                        when "010" =>
+                            if ( L13 = 25 ) then
+                                L13 <= 0;
+                            else
+                                L13 <= L13 + 1;
+                            end if;
+                        when "011" =>
+                            if ( L14 = 25 ) then
+                                L14 <= 0;
+                            else
+                                L14 <= L14 + 1;
+                            end if;
+                        when others =>
+                            L11 <= L11;
+                            L12 <= L12;
+                            L13 <= L13;
+                            L14 <= L14;
+                    end case;
+                
+                elsif( P1_down = '1' ) then
+                    case selected1 is
+                        when "000" =>
+                            if ( L11 = 0 ) then
+                                L11 <= 25;
+                            else
+                                L11 <= L11 - 1;
+                            end if;
+                        when "001" =>
+                            if ( L12 = 0 ) then
+                                L12 <= 25;
+                            else
+                                L12 <= L12 - 1;
+                            end if;
+                        when "010" =>
+                            if ( L13 = 0 ) then
+                                L13 <= 25;
+                            else
+                                L13 <= L13 - 1;
+                            end if;
+                        when "011" =>
+                            if ( L14 = 0 ) then
+                                L14 <= 25;
+                            else
+                                L14 <= L14 - 1;
+                            end if;
+                        when others =>
+                            L11 <= L11;
+                            L12 <= L12;
+                            L13 <= L13;
+                            L14 <= L14;
+                    end case;
+                elsif( P1_right = '1' ) then
+                    if (cursor1 = 379) then
+                        cursor1 <= 375;
+                    else
+                        cursor1 <= cursor1 + 1;
+                    end if;
+                    
+                    if ( selected1 = "100" ) then
+                        selected1 <= "000";
+                    else
+                        selected1 <= selected1 + 1;
+                    end if;
+                elsif( P1_left = '1' ) then
+                    if (cursor1 = 375) then
+                        cursor1 <= 379;
+                    else
+                        cursor1 <= cursor1 - 1;
+                    end if;
+                    if ( selected1 = "000" ) then
+                        selected1 <= "100";
+                    else
+                        selected1 <= selected1 - 1;
+                    end if;
+    
+                
                 end if;
-            elsif( P1_left = '1' ) then
-                if ( selected1 = "000" ) then
-                    selected1 <= "100";
-                else
-                    selected1 <= selected1 - 1;
+                if( P2_UP = '1' ) then
+                    case selected2 is
+                        when "000" =>
+                            if ( L21 = 25 ) then
+                                L21 <= 0;
+                            else
+                                L21 <= L21 + 1;
+                            end if;
+                        when "001" =>
+                            if ( L22 = 25 ) then
+                                L22 <= 0;
+                            else
+                                L22 <= L22 + 1;
+                            end if;
+                        when "010" =>
+                            if ( L23 = 25 ) then
+                                L23 <= 0;
+                            else
+                                L23 <= L23 + 1;
+                            end if;
+                        when "011" =>
+                            if ( L24 = 25 ) then
+                                L24 <= 0;
+                            else
+                                L24 <= L24 + 1;
+                            end if;
+                        when others =>
+                            L21 <= L21;
+                            L22 <= L22;
+                            L23 <= L23;
+                            L24 <= L24;
+                    end case;
+                elsif( P2_down = '1' ) then
+                    case selected2 is
+                        when "000" =>
+                            if ( L21 = 0 ) then
+                                L21 <= 25;
+                            else
+                                L21 <= L21 - 1;
+                            end if;
+                        when "001" =>
+                            if ( L22 = 0 ) then
+                                L22 <= 25;
+                            else
+                                L22 <= L22 - 1;
+                            end if;
+                        when "010" =>
+                            if ( L23 = 0 ) then
+                                L23 <= 25;
+                            else
+                                L23 <= L23 - 1;
+                            end if;
+                        when "011" =>
+                            if ( L24 = 0 ) then
+                                L24 <= 25;
+                            else
+                                L24 <= L24 - 1;
+                            end if;
+                        when others =>
+                            L21 <= L21;
+                            L22 <= L22;
+                            L23 <= L23;
+                            L24 <= L24;
+                    end case;
+                elsif( P2_right = '1' ) then
+                    if (cursor2 = 386) then
+                        cursor2 <= 382;
+                    else
+                        cursor2 <= cursor2 + 1;
+                    end if;
+                    if ( selected2 = "100" ) then
+                        selected2 <= "000";
+                    else
+                        selected2 <= selected2 + 1;
+                    end if;
+                elsif( P2_left = '1' ) then
+                    if (cursor2 = 382) then
+                        cursor2 <= 386;
+                    else
+                        cursor2 <= cursor2 - 1;
+                    end if;
+                    if ( selected2 = "000" ) then
+                        selected2 <= "100";
+                    else
+                        selected2 <= selected2 - 1;
+                    end if;
                 end if;
-
-            
             end if;
-            if( P2_UP = '1' ) then
-                case selected2 is
-                    when "000" =>
-                        if ( L21 = 25 ) then
-                            L21 <= 0;
-                        else
-                            L21 <= L21 + 1;
-                        end if;
-                    when "001" =>
-                        if ( L22 = 25 ) then
-                            L22 <= 0;
-                        else
-                            L22 <= L22 + 1;
-                        end if;
-                    when "010" =>
-                        if ( L23 = 25 ) then
-                            L23 <= 0;
-                        else
-                            L23 <= L23 + 1;
-                        end if;
-                    when "011" =>
-                        if ( L24 = 25 ) then
-                            L24 <= 0;
-                        else
-                            L24 <= L24 + 1;
-                        end if;
-                    when others =>
-                        L21 <= L21;
-                        L22 <= L22;
-                        L23 <= L23;
-                        L24 <= L24;
-                end case;
-            elsif( P2_down = '1' ) then
-                case selected2 is
-                    when "000" =>
-                        if ( L21 = 0 ) then
-                            L21 <= 25;
-                        else
-                            L21 <= L21 - 1;
-                        end if;
-                    when "001" =>
-                        if ( L22 = 0 ) then
-                            L22 <= 25;
-                        else
-                            L22 <= L22 - 1;
-                        end if;
-                    when "010" =>
-                        if ( L23 = 0 ) then
-                            L23 <= 25;
-                        else
-                            L23 <= L23 - 1;
-                        end if;
-                    when "011" =>
-                        if ( L24 = 0 ) then
-                            L24 <= 25;
-                        else
-                            L24 <= L24 - 1;
-                        end if;
-                    when others =>
-                        L21 <= L21;
-                        L22 <= L22;
-                        L23 <= L23;
-                        L24 <= L24;
-                end case;
-            elsif( P2_right = '1' ) then
-                if ( selected2 = "100" ) then
-                    selected2 <= "000";
-                else
-                    selected2 <= selected2 + 1;
-                end if;
-            elsif( P2_left = '1' ) then
-                if ( selected2 = "000" ) then
-                    selected2 <= "100";
-                else
-                    selected2 <= selected2 - 1;
-                end if;
-
             
+            if( selected1 = "100" and selected2 = "100") then
+                both_ok <= '1';
+            else
+                both_ok <= '0';
             end if;
         end if;
     end process;    
