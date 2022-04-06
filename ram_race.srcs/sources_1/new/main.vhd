@@ -1,139 +1,306 @@
-----------------------------------------------------------------------------------
--- Company: 
--- Engineer: 
--- 
--- Create Date: 09.02.2022 14:32:03
--- Design Name: 
--- Module Name: main - Behavioral
--- Project Name: 
--- Target Devices: 
--- Tool Versions: 
--- Description: 
--- 
--- Dependencies: 
--- 
--- Revision:
--- Revision 0.01 - File Created
--- Additional Comments:
--- 
-----------------------------------------------------------------------------------
-
-
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 
--- Uncomment the following library declaration if using
--- arithmetic functions with Signed or Unsigned values
---use IEEE.NUMERIC_STD.ALL;
-
--- Uncomment the following library declaration if instantiating
--- any Xilinx leaf cells in this code.
---library UNISIM;
---use UNISIM.VComponents.all;
-
 entity main is
-    Port (clk : in STD_LOGIC;
-    	   jsup, jsdown, jsleft, jsright  : IN std_logic;
-
-    
-           HSYNC : out STD_LOGIC;  
-           VSYNC : out STD_LOGIC;
+    Port (  CLK_100 : in STD_LOGIC;
             
-           RED : out STD_LOGIC_VECTOR (0 TO 3); 
-           GREEN : out STD_LOGIC_VECTOR (0 TO 3);
-           BLUE : out STD_LOGIC_VECTOR (0 TO 3) );
+            -- Player 1 joystick input
+            JS1_UP, JS1_RIGHT, JS1_DOWN, JS1_LEFT, BTN1_ACT1, BTN1_ACT2  : in STD_LOGIC;
+            
+            -- Player 2 joystick input
+            JS2_UP, JS2_RIGHT, JS2_DOWN, JS2_LEFT, BTN2_ACT1, BTN2_ACT2  : in STD_LOGIC;
+            
+            -- State inputs
+            btnStart, save, reset : in STD_LOGIC;
+            
+            sfx_mute : in STD_LOGIC;
+            msc_mute: in STD_LOGIC;
+            mute : in STD_LOGIC;
+           
+            -- Action button test
+            P1_ACT1, P1_ACT2 : out STD_LOGIC;
+            
+            P2_ACT1, P2_ACT2 : out STD_LOGIC;
+
+            -- VGA values
+            HSYNC : out STD_LOGIC;  
+            VSYNC : out STD_LOGIC;
+            
+            RED : out STD_LOGIC_VECTOR (0 to 3); 
+            GREEN : out STD_LOGIC_VECTOR (0 to 3);
+            BLUE : out STD_LOGIC_VECTOR (0 to 3);
+            
+            msc_out : out STD_LOGIC;
+            sfx_out : out STD_LOGIC );
 end main;
 
-
 architecture Behavioral of main is
+ 
+    signal clk_25_buff : STD_LOGIC;
+    signal clk_400_buff : STD_LOGIC;
+    
+    -- Buffer for the player 1 controls to player 1 ,from C1 to P1
+    signal c1_up_buff, c1_right_buff, c1_down_buff, c1_left_buff, c1_neut_buff  : STD_LOGIC;
+    
+    -- Buffer for the player 1 controls, from P1 to D1
+    signal p1_up_buff, p1_right_buff, p1_down_buff, p1_left_buff : STD_LOGIC;
+    
+    -- Buffer for the player 1 controls to player 1 ,from C2 to P2
+    signal c2_up_buff, c2_right_buff, c2_down_buff, c2_left_buff, c2_neut_buff  : STD_LOGIC;
+    
+    -- Buffer for the player 1 controls, from P2 to D1
+    signal p2_up_buff, p2_right_buff, p2_down_buff, p2_left_buff : STD_LOGIC;
+    
+    -- Buffer for buttons from controls to output
+    signal p1_action1_buff, p2_action1_buff, p1_action2_buff, p2_action2_buff : STD_LOGIC;
+    
+    -- Buffer for MENU btns
+    SIGNAL p1_menu_btn, p2_menu_btn : STD_LOGIC;
+    
+    -- PLOC for checking winner
+    SIGNAL endGame_buffer : STD_LOGIC;
+    
+    -- State output buffers
+    SIGNAL menu_buffer, name_buffer, playing_buffer, score_buffer : STD_LOGIC;
+    
+    SIGNAL selection_s, score_s, both_ok_s : STD_LOGIC;
 
-COMPONENT display IS
-    Port ( CLK : in STD_LOGIC;
-           CLK_board : in STD_LOGIC;
+    -- 25Mhz clock prescaler mainly for the VGA controller
+    component clk_25 is
+        Port (  clk_in1 : in STD_LOGIC;
+                reset : in STD_LOGIC;
+                   
+                locked : out STD_LOGIC;
+                CLK_25MHz : out STD_LOGIC;
+                CLK_400MHz : out STD_LOGIC);
+    end component clk_25;
+    
+    COMPONENT sound is
+    Port ( msc_out : out STD_LOGIC;
+            sfx_out : out STD_LOGIC;
+           clk_in : in STD_LOGIC;
+           en : in STD_LOGIC;
+           sfx_mute : in STD_LOGIC;
+           msc_mute: in STD_LOGIC;
+           mute : in STD_LOGIC
+           );
+    end COMPONENT sound;
+    
+    component controls is
+        Port (  CLK : in STD_LOGIC;
+    
+                JS_UP : in STD_LOGIC;
+                JS_RIGHT : in STD_LOGIC;
+                JS_DOWN : in STD_LOGIC;
+                JS_LEFT : in STD_LOGIC;
+                
+                BTN_ACTION1 : in STD_LOGIC;
+                BTN_ACTION2 : in STD_LOGIC;
+                BTN_MENU : in STD_LOGIC;
+                
+                MENU_OUT    : out STD_LOGIC;
+                P_ACTION1 : out STD_LOGIC;
+                P_ACTION2 : out STD_LOGIC;
+                    
+                P_GO_UP : out STD_LOGIC;
+                P_GO_RIGHT : out STD_LOGIC;
+                P_GO_DOWN : out STD_LOGIC;
+                P_GO_LEFT : out STD_LOGIC;
+                P_GO_NEUT : out STD_LOGIC);
+    end component controls;
 
-           HSYNC : out STD_LOGIC;  
-           VSYNC : out STD_LOGIC;
+    component player_entity is
+        Port (  CLK : in STD_LOGIC;
+                P_GO_UP, P_GO_RIGHT, P_GO_DOWN, P_GO_LEFT, P_GO_NEUT : in STD_LOGIC;
             
-           RED : out STD_LOGIC_VECTOR (0 TO 3); 
-           GREEN : out STD_LOGIC_VECTOR (0 TO 3);
-           BLUE : out STD_LOGIC_VECTOR (0 TO 3);
-           
-           PLOC : in integer;
-           PLOC_old : in integer);
-END COMPONENT display;
+                P_UP, P_RIGHT, P_DOWN, P_LEFT : out STD_LOGIC);
+    end component player_entity;
+    
+    component display is   
+        Port (  CLK_100 : in STD_LOGIC;
+                CLK_25 : in STD_LOGIC;
+                CLK_400 : in STD_LOGIC;
+                enGame : in STD_LOGIC;
+                reset : in STD_LOGIC;
+                show_score : in STD_LOGIC;
+                show_name : in STD_LOGIC;
+                P1_UP, P1_RIGHT, P1_DOWN, P1_LEFT : in STD_LOGIC;
+                P2_UP, P2_RIGHT, P2_DOWN, P2_LEFT : in STD_LOGIC;
+                
+                endGame : out STD_LOGIC;
+                HSYNC : out STD_LOGIC;  
+                VSYNC : out STD_LOGIC;
+                both_ok : out STD_LOGIC;
 
-COMPONENT player_entity IS
-    PORT
-	(
-	            up, down, left, right, neut  : IN std_logic;
+                selection : out STD_LOGIC;
 
-		clk                          : IN std_logic;
-		pos                          : OUT INTEGER := 161;
-		old_pos                      : OUT INTEGER := 161
-	);
-END COMPONENT player_entity;
+                RED : out STD_LOGIC_VECTOR (0 to 3); 
+                GREEN : out STD_LOGIC_VECTOR (0 to 3);
+                BLUE : out STD_LOGIC_VECTOR (0 to 3));
+    end component display;
 
-COMPONENT controls IS
-Port ( Clk              : in STD_LOGIC;
-           JoystickLeft     : in STD_LOGIC;
-           JoystickRight    : in STD_LOGIC;
-           JoystickUp       : in STD_LOGIC;
-           JoystickDown     : in STD_LOGIC;
-           Left : out STD_LOGIC;
-           Right : out STD_LOGIC;
-           Up : out STD_LOGIC;
-           Down : out STD_LOGIC;
-           Neutral : out STD_LOGIC);
-END COMPONENT controls;
+    COMPONENT FSM_gameplay is
+    Port ( clk              : in STD_LOGIC;
+           btnStart         : in STD_LOGIC;
+           score_saved      : in STD_LOGIC;
+           async_reset      : in STD_LOGIC;
+           endGame          : in STD_LOGIC;
+           selection        : in STD_LOGIC;
+           both_ok          : in STD_LOGIC;
 
-COMPONENT clk_25 IS
-        Port ( clk_in1 : in STD_LOGIC;
-               reset : in STD_LOGIC;
-               
-               locked : out STD_LOGIC;
-               CLK_25MHz : out STD_LOGIC);
-END COMPONENT clk_25;
-
-SIGNAL clk_25mhz : std_logic;
-SIGNAL position : INTEGER;
-SIGNAL position_old : INTEGER;
-
-SIGNAL sup, sdown, sleft, sright, sneut  : std_logic;
-
+           score_out        : out STD_LOGIC;
+           menu_out         : out STD_LOGIC;
+           name_out         : out STD_LOGIC;
+           playing_out      : out STD_LOGIC;
+           save_score_out   : out STD_LOGIC );
+    end COMPONENT FSM_gameplay;
 begin
 
-CD1 : clk_25 Port Map(clk_in1 => clk,
-                        reset => '0',
-                        clk_25mhz => clk_25mhz);
+CD1 : clk_25 port map (
+    clk_in1 => CLK_100,
+    
+    reset => '0',
+    clk_25mhz => clk_25_buff,
+    clk_400mhz => clk_400_buff
+);
 
-D1 : display Port Map (CLK => clk_25mhz,
-                       CLK_board => clk,
-                       HSYNC =>  HSYNC,
-                       VSYNC =>  VSYNC,
-                       RED => RED,
-                       GREEN => GREEN,
-                       BLUE => BLUE,
-                       PLOC => position,
-                       PLOC_old => position_old);
+-- TEMPORARY TEST
+P1_ACT1 <= p1_action1_buff;
+P1_ACT2 <= p1_action2_buff;
 
-P1 : player_entity Port Map(up => sup, 
-                            down => sdown, 
-                            left => sleft, 
-                            right => sright, 
-                            neut => sneut,
-                            clk  => clk,
-                            pos => position,
-                            old_pos => position_old);
+C1 : controls port map (
+    CLK => CLK_100,
+    
+    JS_UP => JS1_UP,
+    JS_RIGHT => JS1_RIGHT,
+    JS_DOWN => JS1_DOWN,
+    JS_LEFT => JS1_LEFT,
+    
+    BTN_ACTION1 => BTN1_ACT1,
+    BTN_ACTION2 => BTN1_ACT2,
+    BTN_MENU => btnstart,
+    
+    MENU_OUT => p1_menu_btn,
+    P_ACTION1 => p1_action1_buff,
+    P_ACTION2 => p1_action2_buff,
+    
+    P_GO_UP => c1_up_buff,
+    P_GO_RIGHT => c1_right_buff,
+    P_GO_DOWN => c1_down_buff,
+    P_GO_LEFT => c1_left_buff,
+    P_GO_NEUT => c1_neut_buff
+);
 
-C1 : controls Port Map(Clk => clk,
-                       JoystickLeft => jsleft,
-                       JoystickRight => jsright,
-                       JoystickUp => jsup,
-                       JoystickDown => jsdown,
-                       Left => sleft,
-                       Right => sright,
-                       Up => sup,
-                       Down => sdown,
-                       Neutral => sneut);
+-- TEMPORARY TEST
+P2_ACT1 <= p2_action1_buff;
+P2_ACT2 <= p2_action2_buff;
 
+-- Port map for the player 2 controls
+C2 : controls port map (
+    CLK => CLK_100,
+    
+    JS_UP => JS2_UP,
+    JS_RIGHT => JS2_RIGHT,
+    JS_DOWN => JS2_DOWN,
+    JS_LEFT => JS2_LEFT,
+    
+    BTN_ACTION1 => BTN2_ACT1,
+    BTN_ACTION2 => BTN2_ACT2,
+    BTN_MENU => reset,            
+    
+    MENU_OUT => p2_menu_btn,
+    P_ACTION1 => p2_action1_buff,
+    P_ACTION2 => p2_action2_buff,
+    
+    P_GO_UP => c2_up_buff,
+    P_GO_RIGHT => c2_right_buff,
+    P_GO_DOWN => c2_down_buff,
+    P_GO_LEFT => c2_left_buff,
+    P_GO_NEUT => c2_neut_buff
+);
+
+P1 : player_entity port map (
+    CLK  => CLK_100,
+    
+    P_GO_UP => c1_up_buff, 
+    P_GO_RIGHT => c1_right_buff, 
+    P_GO_DOWN => c1_down_buff, 
+    P_GO_LEFT => c1_left_buff,  
+    P_GO_NEUT => c1_neut_buff,
+    
+    P_UP => p1_up_buff,
+    P_RIGHT => p1_right_buff,
+    P_DOWN => p1_down_buff,
+    P_LEFT => p1_left_buff
+);
+
+-- Port map for the player 2
+P2 : player_entity port map (
+    CLK  => CLK_100,
+    
+    P_GO_UP => c2_up_buff, 
+    P_GO_RIGHT => c2_right_buff, 
+    P_GO_DOWN => c2_down_buff, 
+    P_GO_LEFT => c2_left_buff,  
+    P_GO_NEUT => c2_neut_buff,
+    
+    P_UP => p2_up_buff,
+    P_RIGHT => p2_right_buff,
+    P_DOWN => p2_down_buff,
+    P_LEFT => p2_left_buff
+);
+
+D1 : display port map (
+    CLK_100 => CLK_100,
+    CLK_25 => clk_25_buff,
+    CLK_400 => clk_400_buff,
+    enGame => playing_buffer,
+    reset => menu_buffer,
+    show_score => score_s,
+    show_name => name_buffer,
+    P1_UP => p1_up_buff,
+    P1_RIGHT => p1_right_buff,
+    P1_DOWN => p1_down_buff,
+    P1_LEFT => p1_left_buff,
+    both_ok => both_ok_s,
+    P2_UP => p2_up_buff,
+    P2_RIGHT => p2_right_buff,
+    P2_DOWN => p2_down_buff,
+    P2_LEFT => p2_left_buff,
+    
+    endGame => endGame_buffer,
+    
+    selection => selection_s,
+    
+    HSYNC =>  HSYNC,
+    VSYNC =>  VSYNC,
+    
+    RED => RED,
+    GREEN => GREEN,
+    BLUE => BLUE
+);
+
+FSM : FSM_gameplay Port Map(   clk => clk_100,
+                               btnStart => p1_menu_btn,
+                               score_saved => save,
+                               async_reset => p2_menu_btn,
+                               
+                               endGame => endGame_buffer,
+                               selection => selection_s,
+                               both_ok => both_ok_s,
+                               score_out => score_s,
+                               menu_out => menu_buffer,
+                               name_out => name_buffer,
+                               playing_out => playing_buffer,
+                               save_score_out => score_buffer);
+
+S: sound Port Map( msc_out => msc_out,
+            sfx_out => sfx_out,
+           clk_in => CLK_100,
+           en => '1',
+           sfx_mute => sfx_mute,
+           msc_mute => msc_mute,
+           mute => mute
+           );
+           
 end Behavioral;
