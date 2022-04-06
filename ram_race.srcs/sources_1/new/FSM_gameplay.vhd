@@ -38,6 +38,8 @@ entity FSM_gameplay is
            async_reset      : in STD_LOGIC;
            endGame          : in STD_LOGIC;
            selection        : in STD_LOGIC;
+           both_ok          : in STD_LOGIC;
+
            score_out        : out STD_LOGIC;
            menu_out         : out STD_LOGIC;
            name_out         : out STD_LOGIC;
@@ -91,8 +93,9 @@ NSL : process (state)
                         next_state <= state;
                     END IF;
             WHEN set_name =>
+                menu_out <= '0';
                 name_out <= '1';
-                    if (btnStart = '1') THEN
+                    if (btnStart = '1' AND both_ok = '1') THEN
                        next_state <= playing; 
                     ELSE
                         next_state <= state;

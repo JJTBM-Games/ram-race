@@ -63,7 +63,7 @@ architecture Behavioral of main is
     -- State output buffers
     SIGNAL menu_buffer, name_buffer, playing_buffer, score_buffer : STD_LOGIC;
     
-    SIGNAL selection_s, score_s : STD_LOGIC;
+    SIGNAL selection_s, score_s, both_ok_s : STD_LOGIC;
 
     -- 25Mhz clock prescaler mainly for the VGA controller
     component clk_25 is
@@ -130,7 +130,8 @@ architecture Behavioral of main is
                 endGame : out STD_LOGIC;
                 HSYNC : out STD_LOGIC;  
                 VSYNC : out STD_LOGIC;
-                
+                both_ok : out STD_LOGIC;
+
                 selection : out STD_LOGIC;
 
                 RED : out STD_LOGIC_VECTOR (0 to 3); 
@@ -145,6 +146,8 @@ architecture Behavioral of main is
            async_reset      : in STD_LOGIC;
            endGame          : in STD_LOGIC;
            selection        : in STD_LOGIC;
+           both_ok          : in STD_LOGIC;
+
            score_out        : out STD_LOGIC;
            menu_out         : out STD_LOGIC;
            name_out         : out STD_LOGIC;
@@ -259,7 +262,7 @@ D1 : display port map (
     P1_RIGHT => p1_right_buff,
     P1_DOWN => p1_down_buff,
     P1_LEFT => p1_left_buff,
-    
+    both_ok => both_ok_s,
     P2_UP => p2_up_buff,
     P2_RIGHT => p2_right_buff,
     P2_DOWN => p2_down_buff,
@@ -284,7 +287,7 @@ FSM : FSM_gameplay Port Map(   clk => clk_100,
                                
                                endGame => endGame_buffer,
                                selection => selection_s,
-                               
+                               both_ok => both_ok_s,
                                score_out => score_s,
                                menu_out => menu_buffer,
                                name_out => name_buffer,

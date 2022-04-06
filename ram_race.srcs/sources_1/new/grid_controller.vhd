@@ -19,6 +19,7 @@ entity grid_controller is
            
            endGame : out STD_LOGIC;
            selection : out STD_LOGIC;
+           both_ok : out STD_LOGIC;
            
            P1_UP, P1_RIGHT, P1_DOWN, P1_LEFT : in STD_LOGIC;
            P2_UP, P2_RIGHT, P2_DOWN, P2_LEFT : in STD_LOGIC;
@@ -128,8 +129,8 @@ architecture Behavioral of grid_controller is
     signal L11, L12, L13, L14 : integer := 0; -- p1
     signal L21, L22, L23, L24 : integer := 0; -- p2
     signal selected1, selected2 : STD_LOGIC_VECTOR( 2 downto 0) := "000";
-    signal cursor1 : integer := 495;
-    signal cursor2 : integer := 502;
+    signal cursor1 : integer := 375;
+    signal cursor2 : integer := 382;
 
     ---------------------------
     --Constants containing cell sprite number standard (sn stands for sprite number)
@@ -432,7 +433,19 @@ begin
         END IF;
     
         -- If enGame = 0 (playing) and reset (menu) = 1, than show main menu
-        if (enGame = '0' AND reset = '1') then     
+        if (enGame = '0' AND reset = '1') then   
+--            L11 <=  0;
+--            L12 <=  0;
+--            L13 <=  0; 
+--            L14 <=  0; -- p1
+--            L21 <=  0;
+--            L22 <=  0;
+--            L23 <=  0;
+--            L24 <= 0; -- p2
+--            selected1 <= "000";
+--            selected2 <= "000";
+--            cursor1 <= 375;
+--            cursor2 <= 382;
             menu_addra <=  std_logic_vector(to_unsigned(cellNumber - 1, 11));
             cellSpriteNumber <= to_integer(unsigned(menu_douta));
             if ( p1_up = '1' ) then
@@ -507,10 +520,7 @@ begin
             RGB_DATA <= "000010011111";
             
         elsif (cellSpriteNumber = gray_sn) then -- Gray
-            RGB_DATA <= "101010111100";
-            
-        elsif (cellSpriteNumber = sky_sn) then -- Sky
-            if (show_name = '1') then
+        if (show_name = '1') then
                 if (cellNumber = cursor1) then
                     font_addra <= std_logic_vector(to_unsigned(((39 * 256) + cellPixel), 14));
                     RGB_DATA <= font_douta;
@@ -518,11 +528,14 @@ begin
                     font_addra <= std_logic_vector(to_unsigned(((39 * 256) + cellPixel), 14));
                     RGB_DATA <= font_douta;
                 else
-                    RGB_DATA <= "101011011111";
+                    RGB_DATA <= "101010111100";
                 end if;
             else
-                RGB_DATA <= "101011011111";
+                RGB_DATA <= "101010111100";
             end if;
+            
+        elsif (cellSpriteNumber = sky_sn) then -- Sky
+            RGB_DATA <= "101011011111";
         elsif (cellSpriteNumber = wood_sn) then -- Wood
             RGB_DATA <= "010100110000";  
             
@@ -1115,6 +1128,7 @@ begin
         END IF;
         
         -- Start countdown
+        if( enGame = '1') then
         if (level_start_count /= 0) then
             level_start_count_ticks <= level_start_count_ticks + 1;
         
@@ -1123,6 +1137,7 @@ begin
                 
                 level_start_count_ticks <= 0;
             end if; 
+        end if;
         end if;
         
         -- Shield timers
@@ -1474,8 +1489,8 @@ nameSelector : process(clk_100)
                             L14 <= L14;
                     end case;
                 elsif( P1_right = '1' ) then
-                    if (cursor1 = 499) then
-                        cursor1 <= 495;
+                    if (cursor1 = 379) then
+                        cursor1 <= 375;
                     else
                         cursor1 <= cursor1 + 1;
                     end if;
@@ -1486,8 +1501,8 @@ nameSelector : process(clk_100)
                         selected1 <= selected1 + 1;
                     end if;
                 elsif( P1_left = '1' ) then
-                    if (cursor1 = 495) then
-                        cursor1 <= 499;
+                    if (cursor1 = 375) then
+                        cursor1 <= 379;
                     else
                         cursor1 <= cursor1 - 1;
                     end if;
@@ -1564,8 +1579,8 @@ nameSelector : process(clk_100)
                             L24 <= L24;
                     end case;
                 elsif( P2_right = '1' ) then
-                    if (cursor2 = 506) then
-                        cursor2 <= 502;
+                    if (cursor2 = 386) then
+                        cursor2 <= 382;
                     else
                         cursor2 <= cursor2 + 1;
                     end if;
@@ -1575,8 +1590,8 @@ nameSelector : process(clk_100)
                         selected2 <= selected2 + 1;
                     end if;
                 elsif( P2_left = '1' ) then
-                    if (cursor2 = 502) then
-                        cursor2 <= 506;
+                    if (cursor2 = 382) then
+                        cursor2 <= 386;
                     else
                         cursor2 <= cursor2 - 1;
                     end if;
@@ -1585,9 +1600,13 @@ nameSelector : process(clk_100)
                     else
                         selected2 <= selected2 - 1;
                     end if;
-    
-                
                 end if;
+            end if;
+            
+            if( selected1 = "100" and selected2 = "100") then
+                both_ok <= '1';
+            else
+                both_ok <= '0';
             end if;
         end if;
     end process;    

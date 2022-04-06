@@ -13,7 +13,8 @@ entity display is
             P2_UP, P2_RIGHT, P2_DOWN, P2_LEFT : in STD_LOGIC;
             
             selection : out STD_LOGIC;
-            
+            both_ok : out STD_LOGIC;
+
             endGame : out STD_LOGIC;
             HSYNC : out STD_LOGIC;  
             VSYNC : out STD_LOGIC;
@@ -53,6 +54,8 @@ architecture Behavioral of display is
                reset : in STD_LOGIC;
                show_name : in STD_LOGIC;
                show_score : in STD_LOGIC;
+               both_ok : out STD_LOGIC;
+               
                HLOC_IN : in integer; 
                VLOC_IN : in integer;
                
@@ -109,6 +112,7 @@ GC: grid_controller port map (
     
     endGame => endGame,
     selection => selection,
+    both_ok => both_ok,
     P1_UP => P1_UP,
     P1_RIGHT => P1_RIGHT,
     P1_DOWN => P1_DOWN,
