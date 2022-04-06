@@ -64,6 +64,10 @@ architecture Behavioral of grid_controller is
     signal current_level : integer := 0;
     signal start_level : STD_LOGIC := '0';
     
+    signal level_transistion : STD_LOGIC := '1';
+    signal level_transistion_ticks : integer := 0;
+    signal level_transistion_count : integer := 0;
+    
     ---------------------------
     -- Powerup locations
     type locations10 is array (0 to 9) of integer;
@@ -71,8 +75,12 @@ architecture Behavioral of grid_controller is
     signal bw_locations2 : locations10 := (347, -1, -1, -1, -1, -1, -1, -1, -1, -1);
     signal shield_locations1 : locations10 := (1125, -1, -1, -1, -1, -1, -1, -1, -1, -1);
     signal shield_locations2 : locations10 := (1156, -1, -1, -1, -1, -1, -1, -1, -1, -1);
-    signal switch_locations1 : locations10 := (1097, -1, -1, -1, -1, -1, -1, -1, -1, -1);
-    signal switch_locations2 : locations10 := (1104, -1, -1, -1, -1, -1, -1, -1, -1, -1);
+    signal crystal1_locations1 : locations10 := (1097, -1, -1, -1, -1, -1, -1, -1, -1, -1);
+    signal crystal1_locations2 : locations10 := (1104, -1, -1, -1, -1, -1, -1, -1, -1, -1);
+    signal crystal2_locations1 : locations10 := (739, -1, -1, -1, -1, -1, -1, -1, -1, -1);
+    signal crystal2_locations2 : locations10 := (742, -1, -1, -1, -1, -1, -1, -1, -1, -1);
+    signal crystal3_locations1 : locations10 := (402, -1, -1, -1, -1, -1, -1, -1, -1, -1);
+    signal crystal3_locations2 : locations10 := (439, -1, -1, -1, -1, -1, -1, -1, -1, -1);
     
     signal p1_break_walls : locations10 := (494, -1, -1, -1, -1, -1, -1, -1, -1, -1);
     signal p2_break_walls : locations10 := (507, -1, -1, -1, -1, -1, -1, -1, -1, -1);
@@ -293,14 +301,14 @@ architecture Behavioral of grid_controller is
       );
     end component player_sprite;
     
-    signal powerup_addra : STD_LOGIC_VECTOR(13 downto 0);
+    signal powerup_addra : STD_LOGIC_VECTOR(11 downto 0);
     signal powerup_douta : STD_LOGIC_VECTOR(11 downto 0);
     
     component powerup_sprites is
             port (
                 clka : IN STD_LOGIC;
                 ena : IN STD_LOGIC;
-                addra : IN STD_LOGIC_VECTOR(13 DOWNTO 0);
+                addra : IN STD_LOGIC_VECTOR(11 DOWNTO 0);
                 douta : OUT STD_LOGIC_VECTOR(11 DOWNTO 0));    
     end component powerup_sprites;
     
@@ -446,12 +454,20 @@ begin
             name_addra <=  std_logic_vector(to_unsigned(cellNumber - 1, 11));
             cellSpriteNumber <= to_integer(unsigned(name_douta));
         
-        -- If enGame = 1 (playing) and reset (menu) = 1, show settings
-        --if (enGame = '1' AND reset '1') then
-        --end if;
-        elsif (enGame = '1' AND reset = '0') then -- If enGame = 1 (playing) and reset (menu) = 0, show current level
-        level_addra <=  std_logic_vector(to_unsigned(cellNumber - 1, 11));
-        cellSpriteNumber <= to_integer(unsigned(level_douta));
+        -- If enGame = 1 (playing) and reset (menu) = 0, show current level
+        elsif (enGame = '1' AND reset = '0') then 
+            if (level_transistion = '1') then
+                if (cellNumber <= level_transistion_count) then
+                    level_addra <=  std_logic_vector(to_unsigned(cellNumber - 1, 11));
+                    cellSpriteNumber <= to_integer(unsigned(level_douta));   
+                else
+                    name_addra <=  std_logic_vector(to_unsigned(cellNumber - 1, 11));
+                    cellSpriteNumber <= to_integer(unsigned(name_douta));
+                end if;
+            else 
+                 level_addra <=  std_logic_vector(to_unsigned(cellNumber - 1, 11));
+                  cellSpriteNumber <= to_integer(unsigned(level_douta));   
+            end if;
         end if;
         
         
@@ -768,13 +784,19 @@ begin
                 RGB_DATA <= "000010100010";
                 end if;
             elsif (cellNumber = bw_locations1(current_level) OR cellNumber = bw_locations2(current_level)) then
-                powerup_addra <= std_logic_vector(to_unsigned(((7 * 256) + cellPixel), 14));
+                powerup_addra <= std_logic_vector(to_unsigned(((7 * 256) + cellPixel), 12));
                 RGB_DATA <= powerup_douta;
             elsif (cellNumber = shield_locations1(current_level) OR cellNumber = shield_locations2(current_level)) then
-                powerup_addra <= std_logic_vector(to_unsigned(((1 * 256) + cellPixel), 14));
+                powerup_addra <= std_logic_vector(to_unsigned(((1 * 256) + cellPixel), 12));
                 RGB_DATA <= powerup_douta;
-             elsif (cellNumber = switch_locations1(current_level) OR cellNumber = switch_locations2(current_level)) then
-                powerup_addra <= std_logic_vector(to_unsigned(((2 * 256) + cellPixel), 14));
+             elsif (cellNumber = crystal1_locations1(current_level) OR cellNumber = crystal1_locations2(current_level)) then
+                powerup_addra <= std_logic_vector(to_unsigned(((8 * 256) + cellPixel), 12));
+                RGB_DATA <= powerup_douta;
+            elsif (cellNumber = crystal2_locations1(current_level) OR cellNumber = crystal2_locations2(current_level)) then
+                powerup_addra <= std_logic_vector(to_unsigned(((9 * 256) + cellPixel), 12));
+                RGB_DATA <= powerup_douta;
+            elsif (cellNumber = crystal3_locations1(current_level) OR cellNumber = crystal3_locations2(current_level)) then
+                powerup_addra <= std_logic_vector(to_unsigned(((10 * 256) + cellPixel), 12));
                 RGB_DATA <= powerup_douta;
             elsif (cellNumber = p1_break_walls(current_level) OR cellNumber = p2_break_walls(current_level)) then
                 asset_addra <= std_logic_vector(to_unsigned(((5 * 256) + cellPixel), 12));
@@ -908,7 +930,7 @@ begin
                 RGB_DATA <= font_douta; 
             else 
                 if (p1_powerup /= -1) then
-                    powerup_addra <= std_logic_vector(to_unsigned(((p1_powerup * 256) + cellPixel), 14));
+                    powerup_addra <= std_logic_vector(to_unsigned(((p1_powerup * 256) + cellPixel), 12));
                 
                      -- Replace green floor with gray
                     if (powerup_douta = "000010100010") then
@@ -930,7 +952,7 @@ begin
                 RGB_DATA <= font_douta; 
             else
                 if (p2_powerup /= -1) then
-                    powerup_addra <= std_logic_vector(to_unsigned(((p2_powerup * 256) + cellPixel), 14));
+                    powerup_addra <= std_logic_vector(to_unsigned(((p2_powerup * 256) + cellPixel), 12));
                 
                      -- Replace green floor with gray
                     if (powerup_douta = "000010100010") then
@@ -1114,6 +1136,20 @@ begin
             end if;
         END IF;
         
+        -- Level transistion counter
+        if (level_transistion = '1' AND enGame = '1' AND reset = '0') then
+            level_transistion_ticks <= level_transistion_ticks + 1;
+            
+            if (level_transistion_ticks = 100_000) then
+                level_transistion_ticks <= 0;
+                level_transistion_count <= level_transistion_count + 1;
+                
+                if (level_transistion_count = 1200) then
+                    level_transistion <= '0';
+                end if;
+            end if;
+        end if;
+        
         -- Start countdown
         if (level_start_count /= 0) then
             level_start_count_ticks <= level_start_count_ticks + 1;
@@ -1147,7 +1183,7 @@ begin
         end if;
         
         -- Level timer
-        if (time_seconds < 10 AND level_start_count = 0) then
+        if (time_seconds < 10 AND level_start_count = 0 AND level_transistion = '0') then
             time_ticks <= time_ticks + 1;
             
             if (time_ticks = 100000000) then
@@ -1216,15 +1252,35 @@ begin
             p2_powerup <= 1;
             p2_score <= p2_score + 5;
         
-        -- Switch
-        ELSIF (p1_loc = switch_locations1(current_level)) THEN
-            switch_locations1(current_level) <= -1;
+        -- 10 Points crystal
+        ELSIF (p1_loc = crystal1_locations1(current_level)) THEN
+            crystal1_locations1(current_level) <= -1;
             p1_powerup <= 2;
-            p1_score <= p1_score + 5;
-        ELSIF (p2_loc = switch_locations2(current_level)) THEN
-            switch_locations2(current_level) <= -1;
+            p1_score <= p1_score + 10;
+        ELSIF (p2_loc = crystal1_locations2(current_level)) THEN
+            crystal1_locations2(current_level) <= -1;
             p2_powerup <= 2;
-            p2_score <= p2_score + 5;
+            p2_score <= p2_score + 10;
+        
+        -- 15 Points crystal
+        ELSIF (p1_loc = crystal2_locations1(current_level)) THEN
+            crystal2_locations1(current_level) <= -1;
+            p1_powerup <= 2;
+            p1_score <= p1_score + 15;
+        ELSIF (p2_loc = crystal2_locations2(current_level)) THEN
+            crystal2_locations2(current_level) <= -1;
+            p2_powerup <= 2;
+            p2_score <= p2_score + 15;
+            
+         -- 20 Points crystal
+        ELSIF (p1_loc = crystal3_locations1(current_level)) THEN
+            crystal3_locations1(current_level) <= -1;
+            p1_powerup <= 2;
+            p1_score <= p1_score + 20;
+        ELSIF (p2_loc = crystal3_locations2(current_level)) THEN
+            crystal3_locations2(current_level) <= -1;
+            p2_powerup <= 2;
+            p2_score <= p2_score + 20;
             
         -- Break walls
          ELSIF (p1_loc = p1_break_walls(current_level)) THEN
@@ -1250,7 +1306,10 @@ begin
                 else
                     damage_p1 <= '1';
                     p1_loc <= 1130;
-                    p1_score <= p1_score - 1;
+                    
+                    if (p1_score > 0 ) then
+                        p1_score <= p1_score - 1;
+                    end if;
                 end if;
             end if;
         WHEN npc_up_loc | (npc_up_loc - 40) | (npc_up_loc - 80) | (npc_up_loc - 120) =>
@@ -1260,7 +1319,10 @@ begin
                 else
                     damage_p1 <= '1';
                     p1_loc <= 1130;
-                    p1_score <= p1_score - 1;
+                    
+                    if (p1_score > 0 ) then
+                        p1_score <= p1_score - 1;
+                    end if;
                 end if;
             end if;
         WHEN npc_left_loc | (npc_left_loc - 1) | (npc_left_loc - 2) | (npc_left_loc - 3) =>
@@ -1270,7 +1332,10 @@ begin
                 else
                     damage_p1 <= '1';
                     p1_loc <= 1130;
-                    p1_score <= p1_score - 1;
+                    
+                    if (p1_score > 0 ) then
+                        p1_score <= p1_score - 1;
+                    end if;
                 end if;
             end if;
         WHEN npc_right_loc | (npc_right_loc + 1) | (npc_right_loc + 2) | (npc_right_loc + 3) =>
@@ -1280,7 +1345,10 @@ begin
                 else
                     damage_p1 <= '1';
                     p1_loc <= 1130;
-                    p1_score <= p1_score - 1;
+                    
+                    if (p1_score > 0 ) then
+                        p1_score <= p1_score - 1;
+                    end if;
                 end if;
             end if;
         WHEN OTHERS => 
@@ -1294,7 +1362,10 @@ begin
                 else
                     damage_p2 <= '1';
                     p2_loc <= 1151;
-                    p2_score <= p2_score - 1;
+                    
+                    if (p2_score > 0 ) then
+                        p2_score <= p2_score - 1;
+                    end if;
                 end if;
             end if;
         WHEN npc2_up_loc | (npc2_up_loc - 40) | (npc2_up_loc - 80) | (npc2_up_loc - 120) =>
@@ -1304,7 +1375,10 @@ begin
                 else
                     damage_p2 <= '1';
                     p2_loc <= 1151;
-                    p2_score <= p2_score - 1;
+                   
+                    if (p2_score > 0 ) then
+                        p2_score <= p2_score - 1;
+                    end if;
                 end if;
             end if;
         WHEN npc2_left_loc | (npc2_left_loc - 1) | (npc2_left_loc - 2) | (npc2_left_loc - 3) =>
@@ -1314,7 +1388,10 @@ begin
                 else
                     damage_p2 <= '1';
                     p2_loc <= 1151;
-                    p2_score <= p2_score - 1;
+                    
+                    if (p2_score > 0 ) then
+                        p2_score <= p2_score - 1;
+                    end if;
                 end if;
             end if;
         WHEN npc2_right_loc | (npc2_right_loc + 1) | (npc2_right_loc + 2) | (npc2_right_loc + 3) =>
@@ -1324,7 +1401,10 @@ begin
                 else
                     damage_p2 <= '1';
                     p2_loc <= 1151;
-                    p2_score <= p2_score - 1;
+                    
+                    if (p2_score > 0 ) then
+                        p2_score <= p2_score - 1;
+                    end if;
                 end if;
             end if;
         WHEN OTHERS => 
