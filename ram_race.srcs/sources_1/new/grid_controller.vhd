@@ -23,7 +23,7 @@ entity grid_controller is
            P1_UP, P1_RIGHT, P1_DOWN, P1_LEFT : in STD_LOGIC;
            P2_UP, P2_RIGHT, P2_DOWN, P2_LEFT : in STD_LOGIC;
 
-           RGB_DATA : out STD_LOGIC_VECTOR (0 TO 11));
+           RGB_DATA : buffer STD_LOGIC_VECTOR (0 TO 11));
 end grid_controller;
 
 architecture Behavioral of grid_controller is
@@ -49,18 +49,33 @@ architecture Behavioral of grid_controller is
 
     signal p1_loc : integer := 1130;       -- Starting position as default value for first level
     signal p1_allowed_up, p1_allowed_down, p1_allowed_right, p1_allowed_left : std_logic;
-    signal p1_mysterybox : integer := 0;
+    signal p1_powerup : integer := -1;
+    signal p1_shield_remove : STD_LOGIC := '0';
+    signal p1_shield_ticks : integer := 0;
+    signal p1_score : integer := 0;
     
     signal p2_loc : integer := 1151;       -- Starting position as default value for first level
     signal p2_allowed_up, p2_allowed_down, p2_allowed_right, p2_allowed_left : std_logic;
-    signal p2_mysterybox : integer := 0;
+    signal p2_powerup : integer := -1;
+    signal p2_shield_remove : STD_LOGIC := '0';
+    signal p2_shield_ticks : integer := 0;
+    signal p2_score : integer := 0;
     
     signal current_level : integer := 0;
     signal start_level : STD_LOGIC := '0';
     
     ---------------------------
     -- Powerup locations
-    signal mb_loc1 : integer := 1139;
+    type locations10 is array (0 to 9) of integer;
+    signal bw_locations1 : locations10 := (334, -1, -1, -1, -1, -1, -1, -1, -1, -1);
+    signal bw_locations2 : locations10 := (347, -1, -1, -1, -1, -1, -1, -1, -1, -1);
+    signal shield_locations1 : locations10 := (1125, -1, -1, -1, -1, -1, -1, -1, -1, -1);
+    signal shield_locations2 : locations10 := (1156, -1, -1, -1, -1, -1, -1, -1, -1, -1);
+    signal switch_locations1 : locations10 := (1097, -1, -1, -1, -1, -1, -1, -1, -1, -1);
+    signal switch_locations2 : locations10 := (1104, -1, -1, -1, -1, -1, -1, -1, -1, -1);
+    
+    signal p1_break_walls : locations10 := (494, -1, -1, -1, -1, -1, -1, -1, -1, -1);
+    signal p2_break_walls : locations10 := (507, -1, -1, -1, -1, -1, -1, -1, -1, -1);
     
     ---------------------------
     
@@ -168,7 +183,7 @@ architecture Behavioral of grid_controller is
     constant wood_sn : integer := 45;
     
     constant finish_sn : integer := 46;
-    constant powerup_slot_sn : integer := 47;
+    constant powerup_slot1_sn : integer := 47;
     constant wall_break_sn : integer := 48;
     constant sky_sn : integer := 49;
     constant gray_sn : integer := 50;
@@ -182,16 +197,6 @@ architecture Behavioral of grid_controller is
     constant time_seconds_tens_slot : integer := 56;
     constant time_minutes_slot : integer := 57;
     
-    constant cloud : integer := 63; -- #000000
-    constant sun_orange : integer := 64; -- #FF9900
-    constant sun_yellow : integer := 65; -- #FFDD33
-    constant green : integer := 66;
-    constant dark_grey : integer := 67;
-    constant salmon : integer := 68;
-    
-    constant sel_highscore : integer := 69;
-    constant sel_start : integer := 70;
-    
     constant level_slot : integer := 58;
     
     constant npc_down : integer := 59;
@@ -199,6 +204,16 @@ architecture Behavioral of grid_controller is
     constant npc_right : integer := 61;
     constant npc_up : integer := 62;
     
+    constant powerup_slot2_sn : integer := 63;
+    
+    constant score_ones_slot : integer := 64;
+    constant score_tens_slot : integer := 65;
+    constant score_hunderds_slot : integer := 66;
+    
+    constant score2_ones_slot : integer := 67;
+    constant score2_tens_slot : integer := 68;
+    constant score2_hunderds_slot : integer := 69;
+
     constant name1_1 : integer := 71;
     constant name1_2 : integer := 72;
     constant name1_3 : integer := 73;
@@ -209,8 +224,16 @@ architecture Behavioral of grid_controller is
     constant name2_4 : integer := 78;
     
     constant checkmark : integer := 79; 
-    ---------------------------
+
+    constant cloud : integer := 80; -- #000000
+    constant sun_orange : integer := 81; -- #FF9900
+    constant sun_yellow : integer := 82; -- #FFDD33
+    constant green : integer := 83;
+    constant dark_grey : integer := 84;
+    constant salmon : integer := 85;
     
+    constant sel_highscore : integer := 86;
+    constant sel_start : integer := 87;
     
     signal level_addra : STD_LOGIC_VECTOR( 10 downto 0 );
     signal level_douta : STD_LOGIC_VECTOR( 30 downto 0 );
@@ -268,25 +291,25 @@ architecture Behavioral of grid_controller is
       );
     end component player_sprite;
     
-    signal powerup_addra : STD_LOGIC_VECTOR(7 downto 0);
+    signal powerup_addra : STD_LOGIC_VECTOR(13 downto 0);
     signal powerup_douta : STD_LOGIC_VECTOR(11 downto 0);
     
     component powerup_sprites is
             port (
                 clka : IN STD_LOGIC;
                 ena : IN STD_LOGIC;
-                addra : IN STD_LOGIC_VECTOR(7 DOWNTO 0);
+                addra : IN STD_LOGIC_VECTOR(13 DOWNTO 0);
                 douta : OUT STD_LOGIC_VECTOR(11 DOWNTO 0));    
     end component powerup_sprites;
     
-    signal asset_addra : STD_LOGIC_VECTOR(10 downto 0);
+    signal asset_addra : STD_LOGIC_VECTOR(11 downto 0);
     signal asset_douta : STD_LOGIC_VECTOR(11 downto 0);
     
     component asset_sprites is
             port (
                 clka : IN STD_LOGIC;
                 ena : IN STD_LOGIC;
-                addra : IN STD_LOGIC_VECTOR(10 DOWNTO 0);
+                addra : IN STD_LOGIC_VECTOR(11 DOWNTO 0);
                 douta : OUT STD_LOGIC_VECTOR(11 DOWNTO 0));    
     end component asset_sprites;
     
@@ -474,7 +497,7 @@ begin
             end if;
             
             RGB_DATA <= "010001000100";
-
+            
         elsif (cellSpriteNumber = red_sn) then -- Red
             RGB_DATA <= "110000010010";
                     
@@ -491,28 +514,26 @@ begin
             RGB_DATA <= "010100110000";  
             
         elsif (cellSpriteNumber = finish_sn) then -- Finish
-            asset_addra <= std_logic_vector(to_unsigned(((0 * 256) + cellPixel), 11));
+            asset_addra <= std_logic_vector(to_unsigned(((0 * 256) + cellPixel), 12));
             RGB_DATA <= asset_douta;  
         
         -- Trophy
         elsif (cellSpriteNumber = trophy1_sn) then 
-            asset_addra <= std_logic_vector(to_unsigned(((1 * 256) + cellPixel), 11));
+            asset_addra <= std_logic_vector(to_unsigned(((1 * 256) + cellPixel), 12));
             RGB_DATA <= asset_douta;  
         elsif (cellSpriteNumber = trophy2_sn) then 
-            asset_addra <= std_logic_vector(to_unsigned(((2 * 256) + cellPixel), 11));
+            asset_addra <= std_logic_vector(to_unsigned(((2 * 256) + cellPixel), 12));
             RGB_DATA <= asset_douta;   
         elsif (cellSpriteNumber = trophy3_sn) then 
-            asset_addra <= std_logic_vector(to_unsigned(((3 * 256) + cellPixel), 11));
+            asset_addra <= std_logic_vector(to_unsigned(((3 * 256) + cellPixel), 12));
             RGB_DATA <= asset_douta;   
         elsif (cellSpriteNumber = trophy4_sn) then 
-            asset_addra <= std_logic_vector(to_unsigned(((4 * 256) + cellPixel), 11));
+            asset_addra <= std_logic_vector(to_unsigned(((4 * 256) + cellPixel), 12));
             RGB_DATA <= asset_douta;  
 
         elsif (cellSpriteNumber = floor_sn) then -- Floor
         
         -- Lazer display
-           
-            
             if (cellNumber = p1_loc - 40) then
                 p1_allowed_up <= '1';
             elsif (cellNumber = p1_loc + 40) then
@@ -521,6 +542,19 @@ begin
                 p1_allowed_left <= '1';
             elsif (cellNumber = p1_loc + 1) then
                 p1_allowed_right <= '1';
+            end if;
+            
+            if (p1_powerup /= 7) then
+                -- Check if there is a breakable wall for p1
+                if (cellNumber = p1_loc - 40 AND cellNumber = p1_break_walls(current_level)) then
+                    p1_allowed_up <= '0';
+                elsif (cellNumber = p1_loc + 40 AND cellNumber = p1_break_walls(current_level)) then
+                    p1_allowed_down <= '0';
+                elsif (cellNumber = p1_loc - 1 AND cellNumber = p1_break_walls(current_level)) then
+                    p1_allowed_left <= '0';
+                elsif (cellNumber = p1_loc + 1 AND cellNumber = p1_break_walls(current_level)) then
+                    p1_allowed_right <= '0';
+                end if;
             end if;
             
             if (cellNumber = p2_loc - 40) then
@@ -533,6 +567,19 @@ begin
                 p2_allowed_right <= '1';
             end if;
             
+            if (p2_powerup /= 7) then
+                 -- Check if there is a breakable wall for p2
+                if (cellNumber = p2_loc - 40 AND cellNumber = p2_break_walls(current_level)) then
+                    p2_allowed_up <= '0';
+                elsif (cellNumber = p2_loc + 40 AND cellNumber = p2_break_walls(current_level)) then
+                    p2_allowed_down <= '0';
+                elsif (cellNumber = p2_loc - 1 AND cellNumber = p2_break_walls(current_level)) then
+                    p2_allowed_left <= '0';
+                elsif (cellNumber = p2_loc + 1 AND cellNumber = p2_break_walls(current_level)) then
+                    p2_allowed_right <= '0';
+                end if;
+            end if;
+           
             if (cellNumber = p1_loc) then
                 player_addra <= std_logic_vector(to_unsigned((((animation_index_p1 + player_base) * 256) + cellPixel), 13));
                 RGB_DATA <= player_douta;
@@ -707,6 +754,18 @@ begin
                 else
                 RGB_DATA <= "000010100010";
                 end if;
+            elsif (cellNumber = bw_locations1(current_level) OR cellNumber = bw_locations2(current_level)) then
+                powerup_addra <= std_logic_vector(to_unsigned(((7 * 256) + cellPixel), 14));
+                RGB_DATA <= powerup_douta;
+            elsif (cellNumber = shield_locations1(current_level) OR cellNumber = shield_locations2(current_level)) then
+                powerup_addra <= std_logic_vector(to_unsigned(((1 * 256) + cellPixel), 14));
+                RGB_DATA <= powerup_douta;
+             elsif (cellNumber = switch_locations1(current_level) OR cellNumber = switch_locations2(current_level)) then
+                powerup_addra <= std_logic_vector(to_unsigned(((2 * 256) + cellPixel), 14));
+                RGB_DATA <= powerup_douta;
+            elsif (cellNumber = p1_break_walls(current_level) OR cellNumber = p2_break_walls(current_level)) then
+                asset_addra <= std_logic_vector(to_unsigned(((5 * 256) + cellPixel), 12));
+                RGB_DATA <= asset_douta;  
             else
                 RGB_DATA <= "000010100010"; -- Player is not on floor
             end if;
@@ -829,6 +888,49 @@ begin
         elsif (cellSpriteNumber = colon_sn) then -- Colon
             font_addra <= std_logic_vector(to_unsigned(((colon_sn * 256) + cellPixel), 14));
             RGB_DATA <= font_douta; 
+
+        elsif (cellSpriteNumber = powerup_slot1_sn) then -- Powerup slot / start count display
+            if (level_start_count /= 0) then
+                font_addra <= std_logic_vector(to_unsigned((((29 + level_start_count) * 256) + cellPixel), 14));
+                RGB_DATA <= font_douta; 
+            else 
+                if (p1_powerup /= -1) then
+                    powerup_addra <= std_logic_vector(to_unsigned(((p1_powerup * 256) + cellPixel), 14));
+                
+                     -- Replace green floor with gray
+                    if (powerup_douta = "000010100010") then
+                        RGB_DATA <= "101010111100";
+                    else
+                        RGB_DATA <= powerup_douta;  
+                    end if;
+                else 
+                    font_addra <= std_logic_vector(to_unsigned(((question_sn * 256) + cellPixel), 14));
+                    RGB_DATA <= font_douta;
+                end if;
+                
+            end if;
+        
+   
+      elsif (cellSpriteNumber = powerup_slot2_sn) then -- Powerup slot / start count display
+            if (level_start_count /= 0) then
+                font_addra <= std_logic_vector(to_unsigned((((29 + level_start_count) * 256) + cellPixel), 14));
+                RGB_DATA <= font_douta; 
+            else
+                if (p2_powerup /= -1) then
+                    powerup_addra <= std_logic_vector(to_unsigned(((p2_powerup * 256) + cellPixel), 14));
+                
+                     -- Replace green floor with gray
+                    if (powerup_douta = "000010100010") then
+                        RGB_DATA <= "101010111100";
+                    else
+                        RGB_DATA <= powerup_douta;  
+                    end if;
+                else 
+                    font_addra <= std_logic_vector(to_unsigned(((question_sn * 256) + cellPixel), 14));
+                    RGB_DATA <= font_douta;
+                end if;
+            end if;
+              
         elsif ( cellSpriteNumber = sel_highscore) then
             if ( sel_position = '0' ) then
                 font_addra <= std_logic_vector(to_unsigned(((exclamation_sn * 256) + cellPixel), 14));
@@ -836,30 +938,14 @@ begin
             else
             RGB_DATA <= "101010111100";
             end if;
-        elsif ( cellSpriteNumber = sel_start) then
+       elsif ( cellSpriteNumber = sel_start) then
             if ( sel_position = '1' ) then
                 font_addra <= std_logic_vector(to_unsigned(((exclamation_sn * 256) + cellPixel), 14));
                 RGB_DATA <= font_douta;
             else
             RGB_DATA <= "101010111100";
             end if;
-        elsif (cellSpriteNumber = powerup_slot_sn) then -- Powerup slot / start count display
-            if (level_start_count /= 0) then
-                font_addra <= std_logic_vector(to_unsigned((((29 + level_start_count) * 256) + cellPixel), 14));
-                RGB_DATA <= font_douta; 
-            else
-                if (p1_mysterybox = 1 AND cellNumber = 137) then
-                    powerup_addra <= std_logic_vector(to_unsigned(((0 * 256) + cellPixel), 8));
-                    RGB_DATA <= powerup_douta;   
-                elsif (p2_mysterybox = 1 AND cellNumber = 142) then
-                    powerup_addra <= std_logic_vector(to_unsigned(((0 * 256) + cellPixel), 8));
-                    RGB_DATA <= powerup_douta;   
-                else
-                    font_addra <= std_logic_vector(to_unsigned(((question_sn * 256) + cellPixel), 14));
-                    RGB_DATA <= font_douta; 
-                end if;   
-             end if;
-             
+         
         -- NPC display
         elsif (cellSpriteNumber = npc_up) then
             if lazer_tick = '1' then
@@ -900,6 +986,28 @@ begin
         elsif (cellSpriteNumber = time_minutes_slot) then
              font_addra <= std_logic_vector(to_unsigned((((29 + time_minutes) * 256) + cellPixel), 14));
              RGB_DATA <= font_douta; 
+             
+        -- Score player 1 display
+         elsif (cellSpriteNumber = score_hunderds_slot) then
+             font_addra <= std_logic_vector(to_unsigned((((29 + (p1_score mod 10)) * 256) + cellPixel), 14));
+             RGB_DATA <= font_douta;
+        elsif (cellSpriteNumber = score_tens_slot) then
+             font_addra <= std_logic_vector(to_unsigned((((29 + ((p1_score mod 100) / 10)) * 256) + cellPixel), 14));
+             RGB_DATA <= font_douta;
+         elsif (cellSpriteNumber = score_ones_slot) then
+             font_addra <= std_logic_vector(to_unsigned((((29 + ((p1_score mod 1000) / 100)) * 256) + cellPixel), 14));
+             RGB_DATA <= font_douta;
+             
+        -- Score player 2 display
+         elsif (cellSpriteNumber = score2_hunderds_slot) then
+             font_addra <= std_logic_vector(to_unsigned((((29 + (p2_score mod 10)) * 256) + cellPixel), 14));
+             RGB_DATA <= font_douta;
+        elsif (cellSpriteNumber = score2_tens_slot) then
+             font_addra <= std_logic_vector(to_unsigned((((29 + ((p2_score mod 100) / 10)) * 256) + cellPixel), 14));
+             RGB_DATA <= font_douta;
+         elsif (cellSpriteNumber = score2_ones_slot) then
+             font_addra <= std_logic_vector(to_unsigned((((29 + ((p2_score mod 1000) / 100)) * 256) + cellPixel), 14));
+             RGB_DATA <= font_douta;
              
         -- Level display
         elsif (cellSpriteNumber = level_slot) then
@@ -950,9 +1058,9 @@ begin
         IF ( enGame = '1' AND level_start_count = 0) THEN
              if (P1_UP = '1') then
                 if (p1_allowed_up = '1') then
-                    p1_loc <= p1_loc - 40;
-                    p1_allowed_up <= '0';
-                end if;
+                        p1_loc <= p1_loc - 40;
+                        p1_allowed_up <= '0';
+                    end if;
             elsif (P1_RIGHT = '1') then
                 if (p1_allowed_right = '1') then
                     p1_loc <= p1_loc + 1;
@@ -1003,7 +1111,28 @@ begin
                 level_start_count_ticks <= 0;
             end if; 
         end if;
-          
+        
+        -- Shield timers
+        if (p1_shield_remove = '1') then  
+            p1_shield_ticks <= p1_shield_ticks + 1;
+        
+            if (p1_shield_ticks = 100000000) then
+                p1_shield_remove <= '0';
+                p1_powerup <= -1;
+                p1_shield_ticks <= 0;
+            end if; 
+        end if;
+        
+        if (p2_shield_remove = '1') then  
+            p2_shield_ticks <= p2_shield_ticks + 1;
+        
+            if (p2_shield_ticks = 100000000) then
+                p2_shield_remove <= '0';
+                p2_powerup <= -1;
+                p2_shield_ticks <= 0;
+            end if; 
+        end if;
+        
         -- Level timer
         if (time_seconds < 10 AND level_start_count = 0) then
             time_ticks <= time_ticks + 1;
@@ -1032,6 +1161,7 @@ begin
             current_level <= current_level + 1;
             p1_loc <= 1130;
             p2_loc <= 1151;
+            p1_score <= p1_score + 20;
             level_start_count <= 5;
             start_level <= '0';
             
@@ -1043,6 +1173,7 @@ begin
             current_level <= current_level + 1;
             p1_loc <= 1130;
             p2_loc <= 1151;
+            p2_score <= p2_score + 20;
             level_start_count <= 5;
             start_level <= '0';
             
@@ -1051,10 +1182,44 @@ begin
             time_seconds_tens <= 0;
             time_minutes <= 0;
             
-        -- Powerups
-        ELSIF (p1_loc = 1139) THEN
-            mb_loc1 <= -1; -- Remove mysterybox from map
-            p1_mysterybox <= 1;
+        -- Powerups detection
+        -- Break wall
+        ELSIF (p1_loc = bw_locations1(current_level)) THEN
+            bw_locations1(current_level) <= -1;
+            p1_powerup <= 7;
+            p1_score <= p1_score + 5;
+        ELSIF (p2_loc = bw_locations2(current_level)) THEN
+            bw_locations2(current_level) <= -1;
+            p2_powerup <= 7;
+            p2_score <= p2_score + 5;
+        
+        -- Shield
+        ELSIF (p1_loc = shield_locations1(current_level)) THEN
+            shield_locations1(current_level) <= -1;
+            p1_powerup <= 1;
+            p1_score <= p1_score + 5;
+        ELSIF (p2_loc = shield_locations2(current_level)) THEN
+            shield_locations2(current_level) <= -1;
+            p2_powerup <= 1;
+            p2_score <= p2_score + 5;
+        
+        -- Switch
+        ELSIF (p1_loc = switch_locations1(current_level)) THEN
+            switch_locations1(current_level) <= -1;
+            p1_powerup <= 2;
+            p1_score <= p1_score + 5;
+        ELSIF (p2_loc = switch_locations2(current_level)) THEN
+            switch_locations2(current_level) <= -1;
+            p2_powerup <= 2;
+            p2_score <= p2_score + 5;
+            
+        -- Break walls
+         ELSIF (p1_loc = p1_break_walls(current_level)) THEN
+            p1_break_walls(current_level) <= -1;
+            p1_powerup <= -1;
+         ELSIF (p2_loc = p2_break_walls(current_level)) THEN
+            p2_break_walls(current_level) <= -1;
+            p2_powerup <= -1;
         
         -- Reset  
         ELSIF (reset = '1') THEN
@@ -1067,23 +1232,43 @@ begin
         CASE p1_loc IS
         WHEN npc_down_loc | (npc_down_loc + 40) | (npc_down_loc + 80) | (npc_down_loc + 120) =>
             if lazer_tick = '1' then
-                damage_p1 <= '1';
-                p1_loc <= 1130;
+                if (p1_powerup = 1) then
+                    p1_shield_remove <= '1';
+                else
+                    damage_p1 <= '1';
+                    p1_loc <= 1130;
+                    p1_score <= p1_score - 1;
+                end if;
             end if;
         WHEN npc_up_loc | (npc_up_loc - 40) | (npc_up_loc - 80) | (npc_up_loc - 120) =>
             if lazer_tick = '1' then
-                damage_p1 <= '1';
-                p1_loc <= 1130;
+                if (p1_powerup = 1) then
+                    p1_shield_remove <= '1';
+                else
+                    damage_p1 <= '1';
+                    p1_loc <= 1130;
+                    p1_score <= p1_score - 1;
+                end if;
             end if;
         WHEN npc_left_loc | (npc_left_loc - 1) | (npc_left_loc - 2) | (npc_left_loc - 3) =>
             if lazer_tick = '1' then
-                damage_p1 <= '1';
-                p1_loc <= 1130;
+                if (p1_powerup = 1) then
+                     p1_shield_remove <= '1';
+                else
+                    damage_p1 <= '1';
+                    p1_loc <= 1130;
+                    p1_score <= p1_score - 1;
+                end if;
             end if;
         WHEN npc_right_loc | (npc_right_loc + 1) | (npc_right_loc + 2) | (npc_right_loc + 3) =>
             if lazer_tick = '1' then
-                damage_p1 <= '1';
-                p1_loc <= 1130;
+                if (p1_powerup = 1) then
+                    p1_shield_remove <= '1';
+                else
+                    damage_p1 <= '1';
+                    p1_loc <= 1130;
+                    p1_score <= p1_score - 1;
+                end if;
             end if;
         WHEN OTHERS => 
         END CASE; 
@@ -1091,23 +1276,43 @@ begin
         CASE p2_loc IS
         WHEN npc2_down_loc | (npc2_down_loc + 40) | (npc2_down_loc + 80) | (npc2_down_loc + 120) =>
             if lazer_tick = '1' then
-                damage_p2 <= '1';
-                p2_loc <= 1151;
+                if (p2_powerup = 1) then
+                     p2_shield_remove <= '1';
+                else
+                    damage_p2 <= '1';
+                    p2_loc <= 1151;
+                    p2_score <= p2_score - 1;
+                end if;
             end if;
         WHEN npc2_up_loc | (npc2_up_loc - 40) | (npc2_up_loc - 80) | (npc2_up_loc - 120) =>
             if lazer_tick = '1' then
-                damage_p2 <= '1';
-                p2_loc <= 1151;
+                if (p2_powerup = 1) then
+                    p2_shield_remove <= '1';
+                else
+                    damage_p2 <= '1';
+                    p2_loc <= 1151;
+                    p2_score <= p2_score - 1;
+                end if;
             end if;
         WHEN npc2_left_loc | (npc2_left_loc - 1) | (npc2_left_loc - 2) | (npc2_left_loc - 3) =>
             if lazer_tick = '1' then
-                damage_p2 <= '1';
-                p2_loc <= 1151;
+                if (p2_powerup = 1) then
+                     p2_shield_remove <= '1';
+                else
+                    damage_p2 <= '1';
+                    p2_loc <= 1151;
+                    p2_score <= p2_score - 1;
+                end if;
             end if;
         WHEN npc2_right_loc | (npc2_right_loc + 1) | (npc2_right_loc + 2) | (npc2_right_loc + 3) =>
             if lazer_tick = '1' then
-                damage_p2 <= '1';
-                p2_loc <= 1151;
+                if (p2_powerup = 1) then
+                    p2_shield_remove <= '1';
+                else
+                    damage_p2 <= '1';
+                    p2_loc <= 1151;
+                    p2_score <= p2_score - 1;
+                end if;
             end if;
         WHEN OTHERS => 
         END CASE;  
