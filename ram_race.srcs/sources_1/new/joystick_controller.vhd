@@ -26,20 +26,20 @@ begin
 fetch_direction : process(CLK)
 begin
     if rising_edge(CLK) then
-        if count = 100000 then
+        if count = 1_000_000 then
         
-        if JS_UP = '1' then
-            direction <= "001";
-        elsif JS_RIGHT = '1' then
-            direction <= "010";
-        elsif JS_DOWN = '1' then
-            direction <= "011";
-        elsif JS_LEFT = '1' then
-            direction <= "100";
-        else
-            direction <=  "000";
-        end if;
-        count <= 0;
+            if JS_UP = '1' then
+                direction <= "001";
+            elsif JS_RIGHT = '1' then
+                direction <= "010";
+            elsif JS_DOWN = '1' then
+                direction <= "011";
+            elsif JS_LEFT = '1' then
+                direction <= "100";
+            else
+                direction <=  "000";
+            end if;
+            count <= 0;
         else
             count <= count + 1;
         end if;

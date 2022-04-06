@@ -11,11 +11,14 @@ entity grid_controller is
            
            enGame : in STD_LOGIC;
            reset : in STD_LOGIC;
-           
+           show_score : in STD_LOGIC;
+           show_name : in STD_LOGIC;
+                
            HLOC_IN : in integer; 
            VLOC_IN : in integer;
            
            endGame : out STD_LOGIC;
+           selection : out STD_LOGIC;
            
            P1_UP, P1_RIGHT, P1_DOWN, P1_LEFT : in STD_LOGIC;
            P2_UP, P2_RIGHT, P2_DOWN, P2_LEFT : in STD_LOGIC;
@@ -96,6 +99,36 @@ architecture Behavioral of grid_controller is
     constant npc2_left_loc : integer := 754;
     constant npc2_right_loc : integer := 462;
     
+    ---------------------------
+    --Player animation
+    signal counter_player : integer := 0;
+    signal frame_player : STD_LOGIC_VECTOR(1 downto 0);
+    signal player_base : integer := 0;
+    
+    signal animation_index_p1 : integer := 0;
+    signal animation_index_p2 : integer := 0;
+    
+    signal damage_counter_p1 : integer := 0;
+    signal damage_counter_p2 : integer := 0;
+    
+    signal show_damage_p1 : STD_LOGIC := '0';
+    signal show_damage_p2 : STD_LOGIC := '0';
+
+    signal damage_p1 : STD_LOGIC := '0';
+    signal damage_p2 : STD_LOGIC := '0';
+    
+    ---------------------------
+    --start screen selector
+    
+    signal sel_position : STD_LOGIC := '1';
+    
+    ---------------------------
+    -- Name selector
+    
+    signal L11, L12, L13, L14 : integer := 0; -- p1
+    signal L21, L22, L23, L24 : integer := 0; -- p2
+    signal selected1, selected2 : STD_LOGIC_VECTOR( 2 downto 0) := "000";
+
     ---------------------------
     --Constants containing cell sprite number standard (sn stands for sprite number)
     
@@ -180,9 +213,27 @@ architecture Behavioral of grid_controller is
     constant score2_ones_slot : integer := 67;
     constant score2_tens_slot : integer := 68;
     constant score2_hunderds_slot : integer := 69;
+
+    constant name1_1 : integer := 71;
+    constant name1_2 : integer := 72;
+    constant name1_3 : integer := 73;
+    constant name1_4 : integer := 74;
+    constant name2_1 : integer := 75;
+    constant name2_2 : integer := 76;
+    constant name2_3 : integer := 77;
+    constant name2_4 : integer := 78;
     
-    ---------------------------
+    constant checkmark : integer := 79; 
+
+    constant cloud : integer := 80; -- #000000
+    constant sun_orange : integer := 81; -- #FF9900
+    constant sun_yellow : integer := 82; -- #FFDD33
+    constant green : integer := 83;
+    constant dark_grey : integer := 84;
+    constant salmon : integer := 85;
     
+    constant sel_highscore : integer := 86;
+    constant sel_start : integer := 87;
     
     signal level_addra : STD_LOGIC_VECTOR( 10 downto 0 );
     signal level_douta : STD_LOGIC_VECTOR( 30 downto 0 );
@@ -195,6 +246,28 @@ architecture Behavioral of grid_controller is
                 douta : OUT STD_LOGIC_VECTOR(30 DOWNTO 0));    
     end component level;
     
+    signal menu_addra : STD_LOGIC_VECTOR( 10 downto 0 );
+    signal menu_douta : STD_LOGIC_VECTOR( 30 downto 0 );
+   
+    component start_screen is
+            port (
+                clka : IN STD_LOGIC;
+                ena : IN STD_LOGIC;
+                addra : IN STD_LOGIC_VECTOR(10 DOWNTO 0);
+                douta : OUT STD_LOGIC_VECTOR(30 DOWNTO 0));    
+    end component start_screen;
+    
+    signal name_addra : STD_LOGIC_VECTOR( 10 downto 0 );
+    signal name_douta : STD_LOGIC_VECTOR( 30 downto 0 );
+   
+    component set_name_sprite is
+            port (
+                clka : IN STD_LOGIC;
+                ena : IN STD_LOGIC;
+                addra : IN STD_LOGIC_VECTOR(10 DOWNTO 0);
+                douta : OUT STD_LOGIC_VECTOR(30 DOWNTO 0));    
+    end component set_name_sprite;
+    
     signal font_addra : STD_LOGIC_VECTOR(13 downto 0);
     signal font_douta : STD_LOGIC_VECTOR(11 downto 0);
    
@@ -206,14 +279,14 @@ architecture Behavioral of grid_controller is
                 douta : OUT STD_LOGIC_VECTOR(11 DOWNTO 0));    
     end component font_sprites;
     
-    signal player_addra : STD_LOGIC_VECTOR(9 DOWNTO 0);
+    signal player_addra : STD_LOGIC_VECTOR(12 DOWNTO 0);
     signal player_douta : STD_LOGIC_VECTOR(11 DOWNTO 0);
     
     component player_sprite IS
       Port (
         clka : IN STD_LOGIC;
         ena : IN STD_LOGIC;
-        addra : IN STD_LOGIC_VECTOR(9 DOWNTO 0);
+        addra : IN STD_LOGIC_VECTOR(12 DOWNTO 0);
         douta : OUT STD_LOGIC_VECTOR(11 DOWNTO 0)
       );
     end component player_sprite;
@@ -240,18 +313,20 @@ architecture Behavioral of grid_controller is
                 douta : OUT STD_LOGIC_VECTOR(11 DOWNTO 0));    
     end component asset_sprites;
     
-    signal npc_addra : STD_LOGIC_VECTOR(10 downto 0);
+    signal npc_addra : STD_LOGIC_VECTOR(11 downto 0);
     signal npc_douta : STD_LOGIC_VECTOR(11 downto 0);
     
     component npc is
             port (
                 clka : IN STD_LOGIC;
                 ena : IN STD_LOGIC;
-                addra : IN STD_LOGIC_VECTOR(10 DOWNTO 0);
+                addra : IN STD_LOGIC_VECTOR(11 DOWNTO 0);
                 douta : OUT STD_LOGIC_VECTOR(11 DOWNTO 0));    
     end component npc;
     
 begin
+
+selection <= sel_position;
 
 levels : level port map(
     clka => CLK_400,
@@ -259,6 +334,22 @@ levels : level port map(
     
     addra => level_addra,
     douta => level_douta
+  );
+  
+menu : start_screen port map(
+    clka => CLK_400,
+    ena => '1',
+    
+    addra => menu_addra,
+    douta => menu_douta
+  );
+ 
+set_name : set_name_sprite port map(
+    clka => CLK_400,
+    ena => '1',
+    
+    addra => name_addra,
+    douta => name_douta
   );
   
 font : font_sprites port map (
@@ -339,17 +430,29 @@ begin
         END IF;
     
         -- If enGame = 0 (playing) and reset (menu) = 1, than show main menu
-        --if (enGame = '0' AND reset = '1') then     
-        --end if;
+        if (enGame = '0' AND reset = '1') then     
+            menu_addra <=  std_logic_vector(to_unsigned(cellNumber - 1, 11));
+            cellSpriteNumber <= to_integer(unsigned(menu_douta));
+            if ( p1_up = '1' ) then
+                sel_position <= '0';
+            elsif ( p1_down = '1') then
+                sel_position <= '1';
+            end if;
+        elsif (show_score = '1') then
+        
+        elsif (show_name = '1') then
+            name_addra <=  std_logic_vector(to_unsigned(cellNumber - 1, 11));
+            cellSpriteNumber <= to_integer(unsigned(name_douta));
         
         -- If enGame = 1 (playing) and reset (menu) = 1, show settings
         --if (enGame = '1' AND reset '1') then
         --end if;
-        
-        -- If enGame = 1 (playing) and reset (menu) = 0, show current level
+        elsif (enGame = '1' AND reset = '0') then -- If enGame = 1 (playing) and reset (menu) = 0, show current level
         level_addra <=  std_logic_vector(to_unsigned(cellNumber - 1, 11));
         cellSpriteNumber <= to_integer(unsigned(level_douta));
-      
+        end if;
+        
+        
         if (cellSpriteNumber = border_sn) then  -- Border
             if (cellNumber = p1_loc - 40) then
                 p1_allowed_up <= '0';
@@ -478,146 +581,176 @@ begin
             end if;
            
             if (cellNumber = p1_loc) then
-                player_addra <= std_logic_vector(to_unsigned(((0 * 256) + cellPixel), 10));
+                player_addra <= std_logic_vector(to_unsigned((((animation_index_p1 + player_base) * 256) + cellPixel), 13));
                 RGB_DATA <= player_douta;
             elsif (cellNumber = p2_loc) then
-                player_addra <= std_logic_vector(to_unsigned(((0 * 256) + cellPixel), 10));
+                player_addra <= std_logic_vector(to_unsigned((((animation_index_p2 + player_base) * 256) + cellPixel), 13));
                 RGB_DATA <= player_douta;
             elsif (cellNumber = npc_up_loc - 40) then
                 if lazer_tick = '1' then
-                RGB_DATA <= "111100000000";
+                npc_addra <= std_logic_vector(to_unsigned(((13 * 256) + cellPixel), 12));
+                RGB_DATA <= npc_douta;
                 else
                 RGB_DATA <= "000010100010";
                 end if;
             elsif (cellNumber = npc_up_loc - 80) then
                 if lazer_tick = '1' then
-                RGB_DATA <= "111100000000";
+                npc_addra <= std_logic_vector(to_unsigned(((12 * 256) + cellPixel), 12));
+                RGB_DATA <= npc_douta;
                 else
                 RGB_DATA <= "000010100010";
                 end if;
             elsif (cellNumber = npc_up_loc - 120) then
                 if lazer_tick = '1' then
-                RGB_DATA <= "111100000000";
+                npc_addra <= std_logic_vector(to_unsigned(((11 * 256) + cellPixel), 12));
+                RGB_DATA <= npc_douta;
                 else
                 RGB_DATA <= "000010100010";
                 end if;
             elsif (cellNumber = npc_down_loc + 40) then
                 if lazer_tick = '1' then
-                RGB_DATA <= "111100000000";
+                npc_addra <= std_logic_vector(to_unsigned(((11 * 256) + cellPixel), 12));
+                RGB_DATA <= npc_douta;
                 else
                 RGB_DATA <= "000010100010";
                 end if;
             elsif (cellNumber = npc_down_loc + 80) then
                 if lazer_tick = '1' then
-                RGB_DATA <= "111100000000";
+                npc_addra <= std_logic_vector(to_unsigned(((12 * 256) + cellPixel), 12));
+                RGB_DATA <= npc_douta;
                 else
                 RGB_DATA <= "000010100010";
                 end if;
             elsif (cellNumber = npc_down_loc + 120) then
                 if lazer_tick = '1' then
-                RGB_DATA <= "111100000000";
+                npc_addra <= std_logic_vector(to_unsigned(((13 * 256) + cellPixel), 12));
+                RGB_DATA <= npc_douta;
                 else
                 RGB_DATA <= "000010100010";
                 end if;
             elsif (cellNumber = npc_right_loc + 1) then
                 if lazer_tick = '1' then
-                RGB_DATA <= "111100000000";
+                npc_addra <= std_logic_vector(to_unsigned(((8 * 256) + cellPixel), 12));
+                RGB_DATA <= npc_douta;
                 else
                 RGB_DATA <= "000010100010";
                 end if;
             elsif (cellNumber = npc_right_loc + 2) then
                 if lazer_tick = '1' then
-                RGB_DATA <= "111100000000";
+                npc_addra <= std_logic_vector(to_unsigned(((9 * 256) + cellPixel), 12));
+                RGB_DATA <= npc_douta;
                 else
                 RGB_DATA <= "000010100010";
                 end if;
             elsif (cellNumber = npc_right_loc + 3) then
                 if lazer_tick = '1' then
-                RGB_DATA <= "111100000000";
+                npc_addra <= std_logic_vector(to_unsigned(((10 * 256) + cellPixel), 12));
+                RGB_DATA <= npc_douta;
                 else
                 RGB_DATA <= "000010100010";
                 end if;
             elsif (cellNumber = npc_left_loc - 1) then
                 if lazer_tick = '1' then
-                RGB_DATA <= "111100000000";
+                npc_addra <= std_logic_vector(to_unsigned(((10 * 256) + cellPixel), 12));
+                RGB_DATA <= npc_douta;
                 else
                 RGB_DATA <= "000010100010";
                 end if;
             elsif (cellNumber = npc_left_loc - 2) then
                 if lazer_tick = '1' then
-                RGB_DATA <= "111100000000";
+                npc_addra <= std_logic_vector(to_unsigned(((9 * 256) + cellPixel), 12));
+                RGB_DATA <= npc_douta;
                 else
                 RGB_DATA <= "000010100010";
                 end if;
             elsif (cellNumber = npc_left_loc - 3) then
                 if lazer_tick = '1' then
-                RGB_DATA <= "111100000000";
+                npc_addra <= std_logic_vector(to_unsigned(((8 * 256) + cellPixel), 12));
+                RGB_DATA <= npc_douta;
                 else
                 RGB_DATA <= "000010100010";
                 end if;
             elsif (cellNumber = npc2_up_loc - 40) then
                 if lazer_tick = '1' then
-                RGB_DATA <= "111100000000";
+                npc_addra <= std_logic_vector(to_unsigned(((13 * 256) + cellPixel), 12));
+                RGB_DATA <= npc_douta;
                 else
                 RGB_DATA <= "000010100010";
                 end if;
             elsif (cellNumber = npc2_up_loc - 80) then
                 if lazer_tick = '1' then
-                RGB_DATA <= "111100000000";
+                npc_addra <= std_logic_vector(to_unsigned(((12 * 256) + cellPixel), 12));
+                RGB_DATA <= npc_douta;
                 else
                 RGB_DATA <= "000010100010";
                 end if;
             elsif (cellNumber = npc2_up_loc - 120) then
                 if lazer_tick = '1' then
-                RGB_DATA <= "111100000000";
+                npc_addra <= std_logic_vector(to_unsigned(((11 * 256) + cellPixel), 12));
+                RGB_DATA <= npc_douta;
                 else
                 RGB_DATA <= "000010100010";
                 end if;
             elsif (cellNumber = npc2_down_loc + 40) then
                 if lazer_tick = '1' then
-                RGB_DATA <= "111100000000";
+                npc_addra <= std_logic_vector(to_unsigned(((11 * 256) + cellPixel), 12));
+                RGB_DATA <= npc_douta;
                 else
                 RGB_DATA <= "000010100010";
                 end if;
             elsif (cellNumber = npc2_down_loc + 80) then
                 if lazer_tick = '1' then
-                RGB_DATA <= "111100000000";
+                npc_addra <= std_logic_vector(to_unsigned(((12 * 256) + cellPixel), 12));
+                RGB_DATA <= npc_douta;
                 else
                 RGB_DATA <= "000010100010";
                 end if;
             elsif (cellNumber = npc2_down_loc + 120) then
                 if lazer_tick = '1' then
-                RGB_DATA <= "111100000000";
+                npc_addra <= std_logic_vector(to_unsigned(((13 * 256) + cellPixel), 12));
+                RGB_DATA <= npc_douta;
                 else
                 RGB_DATA <= "000010100010";
                 end if;
             elsif (cellNumber = npc2_right_loc + 1) then
                 if lazer_tick = '1' then
-                RGB_DATA <= "111100000000";
+                npc_addra <= std_logic_vector(to_unsigned(((8 * 256) + cellPixel), 12));
+                RGB_DATA <= npc_douta;
                 else
                 RGB_DATA <= "000010100010";
                 end if;
             elsif (cellNumber = npc2_right_loc + 2) then
                 if lazer_tick = '1' then
-                RGB_DATA <= "111100000000";
+                npc_addra <= std_logic_vector(to_unsigned(((9 * 256) + cellPixel), 12));
+                RGB_DATA <= npc_douta;
                 else
                 RGB_DATA <= "000010100010";
                 end if;
             elsif (cellNumber = npc2_right_loc + 3) then
                 if lazer_tick = '1' then
-                RGB_DATA <= "111100000000";
+                npc_addra <= std_logic_vector(to_unsigned(((10 * 256) + cellPixel), 12));
+                RGB_DATA <= npc_douta;
                 else
                 RGB_DATA <= "000010100010";
                 end if;
             elsif (cellNumber = npc2_left_loc - 1) then
                 if lazer_tick = '1' then
-                RGB_DATA <= "111100000000";
+                npc_addra <= std_logic_vector(to_unsigned(((10 * 256) + cellPixel), 12));
+                RGB_DATA <= npc_douta;
                 else
                 RGB_DATA <= "000010100010";
                 end if;
             elsif (cellNumber = npc2_left_loc - 2) then
                 if lazer_tick = '1' then
-                RGB_DATA <= "111100000000";
+                npc_addra <= std_logic_vector(to_unsigned(((9 * 256) + cellPixel), 12));
+                RGB_DATA <= npc_douta;
+                else
+                RGB_DATA <= "000010100010";
+                end if;
+            elsif (cellNumber = npc2_left_loc - 3) then
+                if lazer_tick = '1' then
+                npc_addra <= std_logic_vector(to_unsigned(((8 * 256) + cellPixel), 12));
+                RGB_DATA <= npc_douta;
                 else
                 RGB_DATA <= "000010100010";
                 end if;
@@ -755,7 +888,7 @@ begin
         elsif (cellSpriteNumber = colon_sn) then -- Colon
             font_addra <= std_logic_vector(to_unsigned(((colon_sn * 256) + cellPixel), 14));
             RGB_DATA <= font_douta; 
-            
+
         elsif (cellSpriteNumber = powerup_slot1_sn) then -- Powerup slot / start count display
             if (level_start_count /= 0) then
                 font_addra <= std_logic_vector(to_unsigned((((29 + level_start_count) * 256) + cellPixel), 14));
@@ -776,7 +909,9 @@ begin
                 end if;
                 
             end if;
-        elsif (cellSpriteNumber = powerup_slot2_sn) then -- Powerup slot / start count display
+        
+   
+      elsif (cellSpriteNumber = powerup_slot2_sn) then -- Powerup slot / start count display
             if (level_start_count /= 0) then
                 font_addra <= std_logic_vector(to_unsigned((((29 + level_start_count) * 256) + cellPixel), 14));
                 RGB_DATA <= font_douta; 
@@ -795,34 +930,49 @@ begin
                     RGB_DATA <= font_douta;
                 end if;
             end if;
+              
+        elsif ( cellSpriteNumber = sel_highscore) then
+            if ( sel_position = '0' ) then
+                font_addra <= std_logic_vector(to_unsigned(((exclamation_sn * 256) + cellPixel), 14));
+                RGB_DATA <= font_douta;
+            else
+            RGB_DATA <= "101010111100";
+            end if;
+       elsif ( cellSpriteNumber = sel_start) then
+            if ( sel_position = '1' ) then
+                font_addra <= std_logic_vector(to_unsigned(((exclamation_sn * 256) + cellPixel), 14));
+                RGB_DATA <= font_douta;
+            else
+            RGB_DATA <= "101010111100";
+            end if;
          
         -- NPC display
         elsif (cellSpriteNumber = npc_up) then
             if lazer_tick = '1' then
-                npc_addra <= std_logic_vector(to_unsigned(((7 * 256) + cellPixel), 11));
+                npc_addra <= std_logic_vector(to_unsigned(((7 * 256) + cellPixel), 12));
             else
-                npc_addra <= std_logic_vector(to_unsigned(((3 * 256) + cellPixel), 11));
+                npc_addra <= std_logic_vector(to_unsigned(((3 * 256) + cellPixel), 12));
             end if;
             RGB_DATA <= npc_douta;
         elsif (cellSpriteNumber = npc_right) then
             if lazer_tick = '1' then
-                npc_addra <= std_logic_vector(to_unsigned(((4 * 256) + cellPixel), 11));
+                npc_addra <= std_logic_vector(to_unsigned(((4 * 256) + cellPixel), 12));
             else
-                npc_addra <= std_logic_vector(to_unsigned(((0 * 256) + cellPixel), 11));
+                npc_addra <= std_logic_vector(to_unsigned(((0 * 256) + cellPixel), 12));
             end if;
             RGB_DATA <= npc_douta;
         elsif (cellSpriteNumber = npc_down) then
             if lazer_tick = '1' then
-                npc_addra <= std_logic_vector(to_unsigned(((5 * 256) + cellPixel), 11));
+                npc_addra <= std_logic_vector(to_unsigned(((5 * 256) + cellPixel), 12));
             else
-                npc_addra <= std_logic_vector(to_unsigned(((1 * 256) + cellPixel), 11));
+                npc_addra <= std_logic_vector(to_unsigned(((1 * 256) + cellPixel), 12));
             end if;
             RGB_DATA <= npc_douta;
         elsif (cellSpriteNumber = npc_left) then
             if lazer_tick = '1' then
-                npc_addra <= std_logic_vector(to_unsigned(((6 * 256) + cellPixel), 11));
+                npc_addra <= std_logic_vector(to_unsigned(((6 * 256) + cellPixel), 12));
             else
-            npc_addra <= std_logic_vector(to_unsigned(((2 * 256) + cellPixel), 11));
+            npc_addra <= std_logic_vector(to_unsigned(((2 * 256) + cellPixel), 12));
             end if;
             RGB_DATA <= npc_douta;
         
@@ -863,6 +1013,45 @@ begin
         elsif (cellSpriteNumber = level_slot) then
              font_addra <= std_logic_vector(to_unsigned((((29 + current_level) * 256) + cellPixel), 14));
              RGB_DATA <= font_douta;
+        elsif (cellSpriteNumber = cloud) then
+            RGB_DATA <= "111111111111";
+        elsif (cellSpriteNumber = sun_orange) then
+            RGB_DATA <= "111110010000";
+        elsif (cellSpriteNumber = sun_yellow) then
+            RGB_DATA <= "111111010011";
+        elsif (cellSpriteNumber = green) then
+            RGB_DATA <= "000010100010";
+        elsif (cellSpriteNumber = dark_grey) then
+            RGB_DATA <= "011001100110";
+        elsif (cellSpriteNumber = salmon) then
+            RGB_DATA <= "111110000111";
+        elsif (cellSpriteNumber = name1_1) then
+            font_addra <= std_logic_vector(to_unsigned(((L11 * 256) + cellPixel), 14));
+            RGB_DATA <= font_douta;
+        elsif (cellSpriteNumber = name1_2) then
+            font_addra <= std_logic_vector(to_unsigned(((L12 * 256) + cellPixel), 14));
+            RGB_DATA <= font_douta;
+        elsif (cellSpriteNumber = name1_3) then
+            font_addra <= std_logic_vector(to_unsigned(((L13 * 256) + cellPixel), 14));
+            RGB_DATA <= font_douta;
+        elsif (cellSpriteNumber = name1_4) then
+            font_addra <= std_logic_vector(to_unsigned(((L14 * 256) + cellPixel), 14));
+            RGB_DATA <= font_douta;
+        elsif (cellSpriteNumber = name2_1) then
+            font_addra <= std_logic_vector(to_unsigned(((L21 * 256) + cellPixel), 14));
+            RGB_DATA <= font_douta;
+        elsif (cellSpriteNumber = name2_2) then
+            font_addra <= std_logic_vector(to_unsigned(((L22 * 256) + cellPixel), 14));
+            RGB_DATA <= font_douta;
+        elsif (cellSpriteNumber = name2_3) then
+            font_addra <= std_logic_vector(to_unsigned(((L23 * 256) + cellPixel), 14));
+            RGB_DATA <= font_douta;
+        elsif (cellSpriteNumber = name2_4) then
+            font_addra <= std_logic_vector(to_unsigned(((L24 * 256) + cellPixel), 14));
+            RGB_DATA <= font_douta;
+        elsif (cellSpriteNumber = checkmark) then
+            font_addra <= std_logic_vector(to_unsigned(((40 * 256) + cellPixel), 14));
+            RGB_DATA <= font_douta;
         end if;
         
         -- Player movement
@@ -1046,6 +1235,7 @@ begin
                 if (p1_powerup = 1) then
                     p1_shield_remove <= '1';
                 else
+                    damage_p1 <= '1';
                     p1_loc <= 1130;
                     p1_score <= p1_score - 1;
                 end if;
@@ -1055,6 +1245,7 @@ begin
                 if (p1_powerup = 1) then
                     p1_shield_remove <= '1';
                 else
+                    damage_p1 <= '1';
                     p1_loc <= 1130;
                     p1_score <= p1_score - 1;
                 end if;
@@ -1064,6 +1255,7 @@ begin
                 if (p1_powerup = 1) then
                      p1_shield_remove <= '1';
                 else
+                    damage_p1 <= '1';
                     p1_loc <= 1130;
                     p1_score <= p1_score - 1;
                 end if;
@@ -1073,6 +1265,7 @@ begin
                 if (p1_powerup = 1) then
                     p1_shield_remove <= '1';
                 else
+                    damage_p1 <= '1';
                     p1_loc <= 1130;
                     p1_score <= p1_score - 1;
                 end if;
@@ -1086,6 +1279,7 @@ begin
                 if (p2_powerup = 1) then
                      p2_shield_remove <= '1';
                 else
+                    damage_p2 <= '1';
                     p2_loc <= 1151;
                     p2_score <= p2_score - 1;
                 end if;
@@ -1095,6 +1289,7 @@ begin
                 if (p2_powerup = 1) then
                     p2_shield_remove <= '1';
                 else
+                    damage_p2 <= '1';
                     p2_loc <= 1151;
                     p2_score <= p2_score - 1;
                 end if;
@@ -1104,6 +1299,7 @@ begin
                 if (p2_powerup = 1) then
                      p2_shield_remove <= '1';
                 else
+                    damage_p2 <= '1';
                     p2_loc <= 1151;
                     p2_score <= p2_score - 1;
                 end if;
@@ -1113,6 +1309,7 @@ begin
                 if (p2_powerup = 1) then
                     p2_shield_remove <= '1';
                 else
+                    damage_p2 <= '1';
                     p2_loc <= 1151;
                     p2_score <= p2_score - 1;
                 end if;
@@ -1120,10 +1317,29 @@ begin
         WHEN OTHERS => 
         END CASE;  
         
---    signal npc_up_loc     : integer := 733;
---    signal npc_down_loc   : integer := 257;
---    signal npc_left_loc   : integer := 459;
---    signal npc_right_loc  : integer := 727;
+        if ( damage_p1 = '1' ) then
+            damage_counter_p1 <= (damage_counter_p1 + 1);
+            if( ( damage_counter_p1 mod 33_000_000 ) = 0 ) then
+                show_damage_p1 <= NOT( show_damage_p1 );
+            end if;
+            if ( damage_counter_p1 = 198_000_001 ) then
+                damage_counter_p1 <= 0;
+                show_damage_p1 <= '0';
+                damage_p1 <= '0';
+            end if;
+        end if;
+        if ( damage_p2 = '1' ) then
+            damage_counter_p2 <= (damage_counter_p2 + 1);
+            if( ( damage_counter_p2 mod 33_000_000 ) = 0 ) then
+                show_damage_p2 <= NOT( show_damage_p2 );
+            end if;
+            if ( damage_counter_p2 = 198_000_001 ) then
+                damage_counter_p2 <= 0;
+                show_damage_p2 <= '0';
+                damage_p2 <= '0';
+            end if;
+        end if;
+
     end if;
 end process;
 
@@ -1137,5 +1353,206 @@ lazerCounter : process(clk_100)
             END IF; 
         END IF;
     end process;
+
+playerCounter : process(clk_100)
+    begin
+        if ( rising_edge(clk_100) ) then
+            counter_player <= ( counter_player + 1 );
+            if ( counter_player = 15_000_000 ) then
+                frame_player <= ( frame_player + 1 );
+                counter_player <= 0;
+            end if;
+            
+            case frame_player is
+                when "00" =>
+                    player_base <= 0;
+                when "01" => 
+                    player_base <= 1;
+                when "10" =>
+                    player_base <= 0;
+                when "11" =>
+                    player_base <= 2;
+            end case;
+        end if;
+    end process;
     
+playerAnimation : process(clk_100)
+    begin
+        if (show_damage_p1 = '1') then
+            animation_index_p1 <= 3;
+        else
+            animation_index_p1 <= 0;
+        end if;   
+        
+        if (show_damage_p2 = '1') then
+            animation_index_p2 <= 18;
+        else
+            animation_index_p2 <= 15;
+        end if;
+    end process;
+    
+nameSelector : process(clk_100)
+    begin
+        if( rising_edge(clk_100) ) then
+            if( P1_UP = '1' ) then
+                case selected1 is
+                    when "000" =>
+                        if ( L11 = 25 ) then
+                            L11 <= 0;
+                        else
+                            L11 <= L11 + 1;
+                        end if;
+                    when "001" =>
+                        if ( L12 = 25 ) then
+                            L12 <= 0;
+                        else
+                            L12 <= L12 + 1;
+                        end if;
+                    when "010" =>
+                        if ( L13 = 25 ) then
+                            L13 <= 0;
+                        else
+                            L13 <= L13 + 1;
+                        end if;
+                    when "011" =>
+                        if ( L14 = 25 ) then
+                            L14 <= 0;
+                        else
+                            L14 <= L14 + 1;
+                        end if;
+                    when others =>
+                        L11 <= L11;
+                        L12 <= L12;
+                        L13 <= L13;
+                        L14 <= L14;
+                end case;
+            
+            elsif( P1_down = '1' ) then
+                case selected1 is
+                    when "000" =>
+                        if ( L11 = 0 ) then
+                            L11 <= 25;
+                        else
+                            L11 <= L11 - 1;
+                        end if;
+                    when "001" =>
+                        if ( L12 = 0 ) then
+                            L12 <= 25;
+                        else
+                            L12 <= L12 - 1;
+                        end if;
+                    when "010" =>
+                        if ( L13 = 0 ) then
+                            L13 <= 25;
+                        else
+                            L13 <= L13 - 1;
+                        end if;
+                    when "011" =>
+                        if ( L14 = 0 ) then
+                            L14 <= 25;
+                        else
+                            L14 <= L14 - 1;
+                        end if;
+                    when others =>
+                        L11 <= L11;
+                        L12 <= L12;
+                        L13 <= L13;
+                        L14 <= L14;
+                end case;
+            elsif( P1_right = '1' ) then
+                if ( selected1 = "100" ) then
+                    selected1 <= "000";
+                else
+                    selected1 <= selected1 + 1;
+                end if;
+            elsif( P1_left = '1' ) then
+                if ( selected1 = "000" ) then
+                    selected1 <= "100";
+                else
+                    selected1 <= selected1 - 1;
+                end if;
+
+            
+            end if;
+            if( P2_UP = '1' ) then
+                case selected2 is
+                    when "000" =>
+                        if ( L21 = 25 ) then
+                            L21 <= 0;
+                        else
+                            L21 <= L21 + 1;
+                        end if;
+                    when "001" =>
+                        if ( L22 = 25 ) then
+                            L22 <= 0;
+                        else
+                            L22 <= L22 + 1;
+                        end if;
+                    when "010" =>
+                        if ( L23 = 25 ) then
+                            L23 <= 0;
+                        else
+                            L23 <= L23 + 1;
+                        end if;
+                    when "011" =>
+                        if ( L24 = 25 ) then
+                            L24 <= 0;
+                        else
+                            L24 <= L24 + 1;
+                        end if;
+                    when others =>
+                        L21 <= L21;
+                        L22 <= L22;
+                        L23 <= L23;
+                        L24 <= L24;
+                end case;
+            elsif( P2_down = '1' ) then
+                case selected2 is
+                    when "000" =>
+                        if ( L21 = 0 ) then
+                            L21 <= 25;
+                        else
+                            L21 <= L21 - 1;
+                        end if;
+                    when "001" =>
+                        if ( L22 = 0 ) then
+                            L22 <= 25;
+                        else
+                            L22 <= L22 - 1;
+                        end if;
+                    when "010" =>
+                        if ( L23 = 0 ) then
+                            L23 <= 25;
+                        else
+                            L23 <= L23 - 1;
+                        end if;
+                    when "011" =>
+                        if ( L24 = 0 ) then
+                            L24 <= 25;
+                        else
+                            L24 <= L24 - 1;
+                        end if;
+                    when others =>
+                        L21 <= L21;
+                        L22 <= L22;
+                        L23 <= L23;
+                        L24 <= L24;
+                end case;
+            elsif( P2_right = '1' ) then
+                if ( selected2 = "100" ) then
+                    selected2 <= "000";
+                else
+                    selected2 <= selected2 + 1;
+                end if;
+            elsif( P2_left = '1' ) then
+                if ( selected2 = "000" ) then
+                    selected2 <= "100";
+                else
+                    selected2 <= selected2 - 1;
+                end if;
+
+            
+            end if;
+        end if;
+    end process;    
 end Behavioral;
