@@ -19,6 +19,7 @@ entity grid_controller is
            HLOC_IN : in integer; 
            VLOC_IN : in integer;
            
+           cheat_mode : in STD_LOGIC;
            reset_score : in STD_LOGIC;
            endGame : out STD_LOGIC;
            selection : out STD_LOGIC;
@@ -92,20 +93,20 @@ architecture Behavioral of grid_controller is
     
     ---------------------------
     -- Powerup locations
-    type locations10 is array (0 to 9) of integer;
-    signal bw_locations1 : locations10 := (334, -1, -1, -1, -1, -1, -1, -1, -1, -1);
-    signal bw_locations2 : locations10 := (347, -1, -1, -1, -1, -1, -1, -1, -1, -1);
-    signal shield_locations1 : locations10 := (1125, -1, -1, -1, -1, -1, -1, -1, -1, -1);
-    signal shield_locations2 : locations10 := (1156, -1, -1, -1, -1, -1, -1, -1, -1, -1);
-    signal crystal1_locations1 : locations10 := (1097, -1, -1, -1, -1, -1, -1, -1, -1, -1);
-    signal crystal1_locations2 : locations10 := (1104, -1, -1, -1, -1, -1, -1, -1, -1, -1);
-    signal crystal2_locations1 : locations10 := (739, -1, -1, -1, -1, -1, -1, -1, -1, -1);
-    signal crystal2_locations2 : locations10 := (742, -1, -1, -1, -1, -1, -1, -1, -1, -1);
-    signal crystal3_locations1 : locations10 := (402, -1, -1, -1, -1, -1, -1, -1, -1, -1);
-    signal crystal3_locations2 : locations10 := (439, -1, -1, -1, -1, -1, -1, -1, -1, -1);
+    type locations3 is array (0 to 2) of integer;
+    signal bw_locations1 : locations3 := (334, 539, 242);
+    signal bw_locations2 : locations3 := (347, 542, 279);
+    signal shield_locations1 : locations3 := (1125, 1125, -1);
+    signal shield_locations2 : locations3 := (1156, 1156, -1);
+    signal crystal1_locations1 : locations3 := (1097, 1097, -1);
+    signal crystal1_locations2 : locations3 := (1104, 1104, -1);
+    signal crystal2_locations1 : locations3 := (739, 739, -1);
+    signal crystal2_locations2 : locations3 := (742, 742, -1);
+    signal crystal3_locations1 : locations3 := (402, 402, -1);
+    signal crystal3_locations2 : locations3 := (439, 439, -1);
     
-    signal p1_break_walls : locations10 := (494, -1, -1, -1, -1, -1, -1, -1, -1, -1);
-    signal p2_break_walls : locations10 := (507, -1, -1, -1, -1, -1, -1, -1, -1, -1);
+    signal p1_break_walls : locations3 := (494, 336, 378);
+    signal p2_break_walls : locations3 := (507, 345, 383);
     
     ---------------------------
     
@@ -169,7 +170,7 @@ architecture Behavioral of grid_controller is
     ---------------------------
     -- Amount of levels for reset cycle
     
-    constant amount_of_levels : integer := 1;
+    constant amount_of_levels : integer := 3;
     
     ---------------------------
     --Constants containing cell sprite number standard (sn stands for sprite number)
@@ -304,14 +305,14 @@ architecture Behavioral of grid_controller is
    
   
     
-    signal level_addra : STD_LOGIC_VECTOR( 10 downto 0 );
+    signal level_addra : STD_LOGIC_VECTOR( 11 downto 0 );
     signal level_douta : STD_LOGIC_VECTOR( 30 downto 0 );
    
     component level is
             port (
                 clka : IN STD_LOGIC;
                 ena : IN STD_LOGIC;
-                addra : IN STD_LOGIC_VECTOR(10 DOWNTO 0);
+                addra : IN STD_LOGIC_VECTOR(11 DOWNTO 0);
                 douta : OUT STD_LOGIC_VECTOR(30 DOWNTO 0));    
     end component level;
     
@@ -603,6 +604,19 @@ begin
             score_addra <=  std_logic_vector(to_unsigned(cellNumber - 1, 11));
             cellSpriteNumber <= to_integer(unsigned(score_douta));
             msc_sel <= "10";
+            
+            if (score_transistion = '1') then
+                if (cellNumber <= score_transistion_count) then
+                    score_addra <=  std_logic_vector(to_unsigned(cellNumber - 1, 11));
+                    cellSpriteNumber <= to_integer(unsigned(score_douta));
+                else
+                    menu_addra <=  std_logic_vector(to_unsigned(cellNumber - 1, 11));
+                    cellSpriteNumber <= to_integer(unsigned(menu_douta));
+                end if;
+            else
+                score_addra <=  std_logic_vector(to_unsigned(cellNumber - 1, 11));
+                cellSpriteNumber <= to_integer(unsigned(score_douta));
+            end if;
 
         
         elsif (show_name = '1') then
@@ -627,14 +641,14 @@ begin
         
             if (level_transistion = '1') then
                 if (cellNumber <= level_transistion_count) then
-                    level_addra <=  std_logic_vector(to_unsigned(cellNumber - 1, 11));
+                    level_addra <=  std_logic_vector(to_unsigned((current_level * 1200) + cellNumber - 1, 12));
                     cellSpriteNumber <= to_integer(unsigned(level_douta));   
                 else
                     name_addra <=  std_logic_vector(to_unsigned(cellNumber - 1, 11));
                     cellSpriteNumber <= to_integer(unsigned(name_douta));
                 end if;
             else 
-                 level_addra <=  std_logic_vector(to_unsigned(cellNumber - 1, 11));
+                 level_addra <=  std_logic_vector(to_unsigned((current_level * 1200) + cellNumber - 1, 12));
                   cellSpriteNumber <= to_integer(unsigned(level_douta));   
             end if;
         end if;
@@ -664,23 +678,55 @@ begin
             
         elsif (cellSpriteNumber = wall_sn) then -- Wall
             if (cellNumber = p1_loc - 40) then
-                p1_allowed_up <= '0';
+                if (cheat_mode = '1') then
+                    p1_allowed_up <= '1';
+                else
+                    p1_allowed_up <= '0';
+                end if;
             elsif (cellNumber = p1_loc + 40) then
-                p1_allowed_down <= '0';
+                if (cheat_mode = '1') then
+                    p1_allowed_down <= '1';
+                else
+                    p1_allowed_down <= '0';
+                end if;
             elsif (cellNumber = p1_loc - 1) then
-                p1_allowed_left <= '0';
+                if (cheat_mode = '1') then
+                    p1_allowed_left <= '1';
+                else
+                    p1_allowed_left <= '0';
+                end if;
             elsif (cellNumber = p1_loc + 1) then
-                p1_allowed_right <= '0';
+                if (cheat_mode = '1') then
+                    p1_allowed_right <= '1';
+                else
+                    p1_allowed_right <= '0';
+                end if;
             end if;
             
             if (cellNumber = p2_loc - 40) then
-                p2_allowed_up <= '0';
+                if (cheat_mode = '1') then
+                    p2_allowed_up <= '1';
+                else
+                    p2_allowed_up <= '0';
+                end if;
             elsif (cellNumber = p2_loc + 40) then
-                p2_allowed_down <= '0';
+                if (cheat_mode = '1') then
+                    p2_allowed_down <= '1';
+                else
+                    p2_allowed_down <= '0';
+                end if;
             elsif (cellNumber = p2_loc - 1) then
-                p2_allowed_left <= '0';
+                if (cheat_mode = '1') then
+                    p2_allowed_left <= '1';
+                else
+                    p2_allowed_left <= '0';
+                end if;
             elsif (cellNumber = p2_loc + 1) then
-                p2_allowed_right <= '0';
+                if (cheat_mode = '1') then
+                    p2_allowed_right <= '1';
+                else
+                    p2_allowed_right <= '0';
+                end if;
             end if;
             
             RGB_DATA <= "010001000100";
@@ -713,7 +759,17 @@ begin
             
         elsif (cellSpriteNumber = finish_sn) then -- Finish
             asset_addra <= std_logic_vector(to_unsigned(((0 * 256) + cellPixel), 12));
-            RGB_DATA <= asset_douta;  
+            RGB_DATA <= asset_douta;
+            
+            if (cellNumber = p1_loc - 40) then
+                p1_allowed_up <= '1';
+            elsif (cellNumber = p1_loc + 40) then
+                p1_allowed_down <= '1';
+            elsif (cellNumber = p1_loc - 1) then
+                p1_allowed_left <= '1';
+            elsif (cellNumber = p1_loc + 1) then
+                p1_allowed_right <= '1';
+            end if;
         
         -- Trophy
         elsif (cellSpriteNumber = trophy1_sn) then 
@@ -1225,8 +1281,9 @@ begin
              
         -- Level display
         elsif (cellSpriteNumber = level_slot) then
-             font_addra <= std_logic_vector(to_unsigned((((29 + current_level) * 256) + cellPixel), 14));
+             font_addra <= std_logic_vector(to_unsigned((((29 + current_level + 1) * 256) + cellPixel), 14));
              RGB_DATA <= font_douta;
+             
         elsif (cellSpriteNumber = cloud) then
             RGB_DATA <= "111111111111";
         elsif (cellSpriteNumber = sun_orange) then
@@ -1346,6 +1403,7 @@ begin
                 level_transistion_count <= level_transistion_count + 1;
                 
                 if (level_transistion_count = 1200) then
+                    level_transistion_count <= 0;
                     level_transistion <= '0';
                 end if;
             end if;
@@ -1361,6 +1419,7 @@ begin
                 name_transistion_count <= name_transistion_count + 1;
                 
                 if (name_transistion_count = 1200) then
+                    name_transistion_count <= 0;
                     name_transistion <= '0';
                 end if;
             end if;
@@ -1384,6 +1443,7 @@ begin
                 score_transistion_count <= score_transistion_count + 1;
                 
                 if (score_transistion_count = 1200) then
+                    score_transistion_count <= 0;
                     score_transistion <= '0';
                 end if;
             end if;
@@ -1451,7 +1511,9 @@ begin
             current_level <= current_level + 1;
             p1_loc <= 1130;
             p2_loc <= 1151;
-            p1_score <= p1_score + 20;
+            p1_powerup <= -1;
+            p2_powerup <= -1;
+            p1_score <= p1_score + 50;
             level_start_count <= 5;
             start_level <= '0';
             
@@ -1463,7 +1525,9 @@ begin
             current_level <= current_level + 1;
             p1_loc <= 1130;
             p2_loc <= 1151;
-            p2_score <= p2_score + 20;
+            p1_powerup <= -1;
+            p2_powerup <= -1;
+            p2_score <= p2_score + 50;
             level_start_count <= 5;
             start_level <= '0';
             
@@ -1536,7 +1600,7 @@ begin
             endGame <= '0';
         END IF;
         
-         if ( current_level >= amount_of_levels ) then
+         if ( current_level > amount_of_levels - 1 ) then
             endGame <= '1';
         END IF;
         
@@ -1549,8 +1613,6 @@ begin
                 else
                     damage_p1 <= '1';
                     p1_loc <= 1130;
-                    
-                    sfx_sel <= "11";
                     
                     
                     if (p1_score > 0 ) then
@@ -1565,10 +1627,6 @@ begin
                 else
                     damage_p1 <= '1';
                     p1_loc <= 1130;
-                    
-                    sfx_sel <= "11";
-                    
-                    
                     if (p1_score > 0 ) then
                         p1_score <= p1_score - 1;
                     end if;
@@ -1689,11 +1747,13 @@ end process;
 lazerCounter : process(clk_100)
     begin
         IF ( rising_edge(clk_100) ) THEN
+        if (enGame = '1') then
             counter_lazers <= (counter_lazers + 1);
             IF ( counter_lazers = 100_000_000 ) THEN
                 lazer_tick <= NOT(lazer_tick);
                 counter_lazers <= 0;            
             END IF; 
+        END IF;
         END IF;
     end process;
 

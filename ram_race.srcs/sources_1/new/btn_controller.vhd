@@ -52,7 +52,7 @@ begin
 fetch_btn : process(CLK)
 begin
     if rising_edge(CLK) then
-        if count = 200000 then
+        if count = 200_000 then
         
             if BTN_ACTION1 = '1' THEN
                 P_ACTION1 <= '1';

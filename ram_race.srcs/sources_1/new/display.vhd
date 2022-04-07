@@ -6,6 +6,7 @@ entity display is
             CLK_25 : in STD_LOGIC;
             CLK_400 : in STD_LOGIC;
             enGame : in STD_LOGIC;
+            cheat_mode : in STD_LOGIC;
             reset : in STD_LOGIC;
             show_score : in STD_LOGIC;
             show_name : in STD_LOGIC;
@@ -61,6 +62,7 @@ architecture Behavioral of display is
                CLK_25 : in STD_LOGIC;
            
                enGame : in STD_LOGIC;
+               cheat_mode : in STD_LOGIC;
                reset : in STD_LOGIC;
                show_name : in STD_LOGIC;
                show_score : in STD_LOGIC;
@@ -123,6 +125,7 @@ GC: grid_controller port map (
     CLK_25 => CLK_25,
     
     enGame => enGame,
+    cheat_mode => cheat_mode,
     reset => reset,
     
     show_name => show_name,

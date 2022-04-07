@@ -11,7 +11,8 @@ entity main is
             JS2_UP, JS2_RIGHT, JS2_DOWN, JS2_LEFT, BTN2_ACT1, BTN2_ACT2  : in STD_LOGIC;
             
             -- State inputs
-            btnStart, save,reset : in STD_LOGIC;
+            btnStart, reset : in STD_LOGIC;
+            cheat_mode : in STD_LOGIC;
             
             sfx_mute : in STD_LOGIC;
             msc_mute: in STD_LOGIC;
@@ -24,9 +25,7 @@ entity main is
             P2_ACT1, P2_ACT2 : out STD_LOGIC;
             
             -- Sound
-            sfx_mute : in STD_LOGIC;
-            msc_mute: in STD_LOGIC;
-            mute : in STD_LOGIC;
+
             msc_out : out STD_LOGIC;
             sfx_out : out STD_LOGIC;
 
@@ -128,6 +127,7 @@ architecture Behavioral of main is
                 VSYNC : out STD_LOGIC;
                 both_ok : out STD_LOGIC;
               
+                cheat_mode : in STD_LOGIC;
                 reset_score : in STD_LOGIC;
                 sfx_mute : in STD_LOGIC;
                 msc_mute: in STD_LOGIC;
@@ -259,6 +259,7 @@ D1 : display port map (
     CLK_25 => clk_25_buff,
     CLK_400 => clk_400_buff,
     enGame => playing_buffer,
+    cheat_mode => cheat_mode,
     reset => menu_buffer,
     show_score => score_s,
     show_name => name_buffer,
