@@ -39,7 +39,8 @@ entity FSM_gameplay is
            endGame          : in STD_LOGIC;
            selection        : in STD_LOGIC;
            both_ok          : in STD_LOGIC;
-
+            
+           reset_score      : out STD_LOGIC;
            score_out        : out STD_LOGIC;
            menu_out         : out STD_LOGIC;
            name_out         : out STD_LOGIC;
@@ -75,7 +76,7 @@ NSL : process (state)
                 playing_out <= '0';
                 save_score_out <= '0';
                 score_out <= '0';
-
+                reset_score <= '1';
                     if (btnStart = '1') THEN
                         if (selection = '1') then
                             next_state <= starting; 
@@ -87,6 +88,12 @@ NSL : process (state)
                     END IF;
             WHEN starting =>
                 menu_out <= '0';
+                name_out <= '1';
+                playing_out <= '0';
+                save_score_out <= '0';
+                score_out <= '0';
+                reset_score <= '0';
+
                     if (btnStart = '0') THEN
                         next_state <= set_name;
                     ELSE
@@ -95,14 +102,22 @@ NSL : process (state)
             WHEN set_name =>
                 menu_out <= '0';
                 name_out <= '1';
+                playing_out <= '0';
+                save_score_out <= '0';
+                score_out <= '0';
+                reset_score <= '0';
                     if (btnStart = '1' AND both_ok = '1') THEN
                        next_state <= playing; 
                     ELSE
                         next_state <= state;
                     END IF;
             WHEN playing =>
+                menu_out <= '0';
                 name_out <= '0';
                 playing_out <= '1';
+                save_score_out <= '0';
+                score_out <= '0';
+                reset_score <= '0';
                     if (endGame = '1') THEN
                         playing_out <= '0';
                         next_state <= save_score;
@@ -110,8 +125,12 @@ NSL : process (state)
                         next_state <= state;
                     END IF;
             WHEN save_score =>
+                menu_out <= '0';
+                name_out <= '0';
                 playing_out <= '0';
                 save_score_out <= '1';
+                score_out <= '0';
+                reset_score <= '0';
                     IF (score_saved = '1') THEN
                         next_state <= menu;
                     ELSE 
@@ -119,7 +138,11 @@ NSL : process (state)
                     END IF;
             WHEN show_score => 
                 menu_out <= '0';
+                name_out <= '0';
+                playing_out <= '0';
+                save_score_out <= '0';
                 score_out <= '1';
+                reset_score <= '0';
                 if (btnStart = '1') then
                     next_state <= menu; 
                 end if;

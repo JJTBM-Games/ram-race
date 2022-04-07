@@ -13,10 +13,13 @@ entity grid_controller is
            reset : in STD_LOGIC;
            show_score : in STD_LOGIC;
            show_name : in STD_LOGIC;
-                
+           save_score : in STD_LOGIC;
+           score_saved : out STD_LOGIC;
+           
            HLOC_IN : in integer; 
            VLOC_IN : in integer;
            
+           reset_score : in STD_LOGIC;
            endGame : out STD_LOGIC;
            selection : out STD_LOGIC;
            both_ok : out STD_LOGIC;
@@ -98,15 +101,15 @@ architecture Behavioral of grid_controller is
     signal counter_lazers : integer := 0;
     signal lazer_tick : STD_LOGIC := '0';
     
-    constant npc_up_loc : integer := 733;
+    constant npc_up_loc : integer := 404;
     constant npc_down_loc : integer := 257;
-    constant npc_left_loc : integer := 459;
-    constant npc_right_loc : integer := 727;
+    constant npc_left_loc : integer := 725;
+    constant npc_right_loc : integer := 607;
     
-    constant npc2_up_loc : integer := 748;
+    constant npc2_up_loc : integer := 437;
     constant npc2_down_loc : integer := 264;
-    constant npc2_left_loc : integer := 754;
-    constant npc2_right_loc : integer := 462;
+    constant npc2_left_loc : integer := 634;
+    constant npc2_right_loc : integer := 756;
     
     ---------------------------
     --Player animation
@@ -139,7 +142,12 @@ architecture Behavioral of grid_controller is
     signal selected1, selected2 : STD_LOGIC_VECTOR( 2 downto 0) := "000";
     signal cursor1 : integer := 375;
     signal cursor2 : integer := 382;
-
+    
+    ---------------------------
+    -- Amount of levels for reset cycle
+    
+    constant amount_of_levels : integer := 1;
+    
     ---------------------------
     --Constants containing cell sprite number standard (sn stands for sprite number)
     
@@ -246,6 +254,33 @@ architecture Behavioral of grid_controller is
     constant sel_highscore : integer := 86;
     constant sel_start : integer := 87;
     
+    constant hs_num_100 : integer := 90;
+    constant hs_num_10 : integer := 89;
+    constant hs_num_1 : integer := 88;
+    
+    signal high_1, high_2, high_3, high_4, score_to_save : integer := 0;
+    signal set_highscore : std_logic := '0';
+    signal high_letter_1, high_letter_2, high_letter_3, high_letter_4 : integer := 0;
+    signal highscore_saved : integer := 0;
+    signal score_ready : std_logic := '0';
+    
+    component highscores is 
+            Port ( clk_100 : in STD_LOGIC;
+                   L1 : in integer;
+                   L2 : in integer;
+                   L3 : in integer;
+                   L4 : in integer;
+                   set : in STD_LOGIC;
+                   score : in integer;
+                   highscore : out integer;
+                   L1_out : out integer;
+                   L2_out : out integer;
+                   L3_out : out integer;
+                   L4_out : out integer);
+   end component highscores;
+   
+  
+    
     signal level_addra : STD_LOGIC_VECTOR( 10 downto 0 );
     signal level_douta : STD_LOGIC_VECTOR( 30 downto 0 );
    
@@ -256,6 +291,17 @@ architecture Behavioral of grid_controller is
                 addra : IN STD_LOGIC_VECTOR(10 DOWNTO 0);
                 douta : OUT STD_LOGIC_VECTOR(30 DOWNTO 0));    
     end component level;
+    
+    signal score_addra : STD_LOGIC_VECTOR( 10 downto 0 );
+    signal score_douta : STD_LOGIC_VECTOR( 30 downto 0 );
+   
+    component score_screen is
+            port (
+                clka : IN STD_LOGIC;
+                ena : IN STD_LOGIC;
+                addra : IN STD_LOGIC_VECTOR(10 DOWNTO 0);
+                douta : OUT STD_LOGIC_VECTOR(30 DOWNTO 0));    
+    end component score_screen;
     
     signal menu_addra : STD_LOGIC_VECTOR( 10 downto 0 );
     signal menu_douta : STD_LOGIC_VECTOR( 30 downto 0 );
@@ -338,6 +384,29 @@ architecture Behavioral of grid_controller is
 begin
 
 selection <= sel_position;
+
+score_ram : highscores port map(
+               clk_100 => clk_100,
+               L1 => high_1,
+               L2 => high_2,
+               L3 => high_3,
+               L4 => high_4,
+               set => set_highscore,
+               score => score_to_save,
+               highscore => highscore_saved,
+               L1_out => high_letter_1,
+               L2_out => high_letter_2,
+               L3_out => high_letter_3,
+               L4_out =>high_letter_4
+);
+
+scores : score_screen port map(
+    clka => CLK_400,
+    ena => '1',
+    
+    addra => score_addra,
+    douta => score_douta
+    );
 
 levels : level port map(
     clka => CLK_400,
@@ -434,26 +503,38 @@ end process;
 current_cell_sprite : process(CLK_100)
 begin
     if (rising_edge(CLK_100)) then
+        if(reset_score = '1') then
+            p1_score <= 0;
+            p2_score <= 0;
+            
+            current_level <= 0;
+            
+            bw_locations1(0)  <= 334;
+            bw_locations2(0)  <= 347;
+            shield_locations1(0)  <= 1125;
+            shield_locations2(0)  <= 1156;
+            crystal1_locations1(0)  <= 1097;
+            crystal1_locations2(0)  <= 1104;
+            crystal2_locations1(0)  <= 739;
+            crystal2_locations2(0)  <= 742;
+            crystal3_locations1(0)  <= 402;
+            crystal3_locations2(0) <= 439;
+    
+            p1_break_walls(0)  <= 494;
+            p2_break_walls(0)  <= 507;
+
+        end if;
+        
+       
+        
         -- Resets player location (this is just for testing now, but will removed later)
         if( reset = '1' ) THEN
             p1_loc <= 1130;
             p2_loc <= 1151;
         END IF;
     
-        -- If enGame = 0 (playing) and reset (menu) = 1, than show main menu
+        -- If enGame = 0 (playing) and reset (menu) = 1, then show main menu
         if (enGame = '0' AND reset = '1') then   
---            L11 <=  0;
---            L12 <=  0;
---            L13 <=  0; 
---            L14 <=  0; -- p1
---            L21 <=  0;
---            L22 <=  0;
---            L23 <=  0;
---            L24 <= 0; -- p2
---            selected1 <= "000";
---            selected2 <= "000";
---            cursor1 <= 375;
---            cursor2 <= 382;
             menu_addra <=  std_logic_vector(to_unsigned(cellNumber - 1, 11));
             cellSpriteNumber <= to_integer(unsigned(menu_douta));
             if ( p1_up = '1' ) then
@@ -461,7 +542,10 @@ begin
             elsif ( p1_down = '1') then
                 sel_position <= '1';
             end if;
-        elsif (show_score = '1') then
+            
+        elsif ( show_score = '1' ) then
+            score_addra <=  std_logic_vector(to_unsigned(cellNumber - 1, 11));
+            cellSpriteNumber <= to_integer(unsigned(score_douta));
         
         elsif (show_name = '1') then
             name_addra <=  std_logic_vector(to_unsigned(cellNumber - 1, 11));
@@ -1034,6 +1118,16 @@ begin
         elsif (cellSpriteNumber = time_minutes_slot) then
              font_addra <= std_logic_vector(to_unsigned((((29 + time_minutes) * 256) + cellPixel), 14));
              RGB_DATA <= font_douta; 
+        -- highscore display
+        elsif (cellSpriteNumber = hs_num_100) then
+             font_addra <= std_logic_vector(to_unsigned((((29 + (highscore_saved mod 10)) * 256) + cellPixel), 14));
+             RGB_DATA <= font_douta;
+        elsif (cellSpriteNumber = hs_num_10) then
+                font_addra <= std_logic_vector(to_unsigned((((29 + ((highscore_saved mod 100) / 10)) * 256) + cellPixel), 14));
+                RGB_DATA <= font_douta;
+         elsif (cellSpriteNumber = hs_num_1) then
+             font_addra <= std_logic_vector(to_unsigned((((29 + ((highscore_saved mod 1000) / 100)) * 256) + cellPixel), 14));
+             RGB_DATA <= font_douta;        
              
         -- Score player 1 display
          elsif (cellSpriteNumber = score_hunderds_slot) then
@@ -1074,17 +1168,39 @@ begin
         elsif (cellSpriteNumber = salmon) then
             RGB_DATA <= "111110000111";
         elsif (cellSpriteNumber = name1_1) then
-            font_addra <= std_logic_vector(to_unsigned(((L11 * 256) + cellPixel), 14));
-            RGB_DATA <= font_douta;
+            if ( show_score = '1') then
+                font_addra <= std_logic_vector(to_unsigned(((high_letter_1 * 256) + cellPixel), 14));
+                RGB_DATA <= font_douta;
+            else
+                font_addra <= std_logic_vector(to_unsigned(((L11 * 256) + cellPixel), 14));
+                RGB_DATA <= font_douta;
+            end if;
         elsif (cellSpriteNumber = name1_2) then
-            font_addra <= std_logic_vector(to_unsigned(((L12 * 256) + cellPixel), 14));
-            RGB_DATA <= font_douta;
+            if ( show_score = '1') then
+                font_addra <= std_logic_vector(to_unsigned(((high_letter_2 * 256) + cellPixel), 14));
+                RGB_DATA <= font_douta;
+            else
+                font_addra <= std_logic_vector(to_unsigned(((L12 * 256) + cellPixel), 14));
+                RGB_DATA <= font_douta;
+            end if;
         elsif (cellSpriteNumber = name1_3) then
-            font_addra <= std_logic_vector(to_unsigned(((L13 * 256) + cellPixel), 14));
-            RGB_DATA <= font_douta;
+            if ( show_score = '1') then
+                font_addra <= std_logic_vector(to_unsigned(((high_letter_3 * 256) + cellPixel), 14));
+                RGB_DATA <= font_douta;
+            else
+                font_addra <= std_logic_vector(to_unsigned(((L13 * 256) + cellPixel), 14));
+                RGB_DATA <= font_douta;
+            end if;
         elsif (cellSpriteNumber = name1_4) then
-            font_addra <= std_logic_vector(to_unsigned(((L14 * 256) + cellPixel), 14));
-            RGB_DATA <= font_douta;
+            if ( show_score = '1') then
+                font_addra <= std_logic_vector(to_unsigned(((high_letter_4 * 256) + cellPixel), 14));
+                RGB_DATA <= font_douta;
+                
+                -- Jochem was here
+            else
+                font_addra <= std_logic_vector(to_unsigned(((L14 * 256) + cellPixel), 14));
+                RGB_DATA <= font_douta;
+            end if;
         elsif (cellSpriteNumber = name2_1) then
             font_addra <= std_logic_vector(to_unsigned(((L21 * 256) + cellPixel), 14));
             RGB_DATA <= font_douta;
@@ -1312,6 +1428,10 @@ begin
             endGame <= '0';
         END IF;
         
+         if ( current_level >= amount_of_levels ) then
+            endGame <= '1';
+        END IF;
+        
         --  Check if player one dies
         CASE p1_loc IS
         WHEN npc_down_loc | (npc_down_loc + 40) | (npc_down_loc + 80) | (npc_down_loc + 120) =>
@@ -1447,7 +1567,8 @@ begin
                 damage_p2 <= '0';
             end if;
         end if;
-
+    
+        
     end if;
 end process;
 
@@ -1489,13 +1610,25 @@ playerAnimation : process(clk_100)
         if (show_damage_p1 = '1') then
             animation_index_p1 <= 3;
         else
-            animation_index_p1 <= 0;
+            if ( p1_powerup = 7 ) then
+                animation_index_p1 <= 21;
+            elsif ( p1_powerup = 1 ) then
+                animation_index_p1 <= 27;
+            else
+            animation_index_p1 <= 15;
+            end if;
         end if;   
         
         if (show_damage_p2 = '1') then
             animation_index_p2 <= 18;
         else
-            animation_index_p2 <= 15;
+            if ( p2_powerup = 7 ) then
+                animation_index_p2 <= 6;
+            elsif ( p2_powerup = 1 ) then
+                animation_index_p2 <= 12;
+            else
+            animation_index_p2 <= 0;
+            end if;
         end if;
     end process;
     
@@ -1687,6 +1820,48 @@ nameSelector : process(clk_100)
                 both_ok <= '1';
             else
                 both_ok <= '0';
+            end if;
+        end if;
+    end process;
+
+
+
+save_score_to_ram : process ( clk_100 )
+    begin
+        if ( rising_edge ( clk_100 ) ) then
+            set_highscore <= '0';
+            score_saved <= '0';
+            if ( save_score = '1' ) then
+                if (p1_score > p2_score) then
+                    high_1 <= L11;
+                    high_2 <= L12;
+                    high_3 <= L13;
+                    high_4 <= L14;
+                    score_to_save <= p1_score;
+                    score_ready <= '1';
+                else
+                    high_1 <= L21;
+                    high_2 <= L22;
+                    high_3 <= L23;
+                    high_4 <= L24;
+                    score_to_save <= p2_score;
+                    score_ready <= '1';
+                end if;
+                if ( score_ready = '1' ) then
+                    set_highscore <= '1';
+                    score_ready <= '0';
+                    score_saved <= '1';
+--                    L11 <=  0;
+--                    L12 <=  0;
+--                    L13 <=  0; 
+--                    L14 <=  0; -- p1
+--                    L21 <=  0;
+--                    L22 <=  0;
+--                    L23 <=  0;
+--                    L24 <= 0; -- p2
+--                    p1_score <= 0;
+--                    p2_score <= 0;
+                end if;
             end if;
         end if;
     end process;    
