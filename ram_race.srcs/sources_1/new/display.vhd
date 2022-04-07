@@ -9,9 +9,12 @@ entity display is
             reset : in STD_LOGIC;
             show_score : in STD_LOGIC;
             show_name : in STD_LOGIC;
+            save_score : in STD_LOGIC;
+            score_saved : out STD_LOGIC;
             P1_UP, P1_RIGHT, P1_DOWN, P1_LEFT : in STD_LOGIC;
             P2_UP, P2_RIGHT, P2_DOWN, P2_LEFT : in STD_LOGIC;
-            
+                       reset_score : in STD_LOGIC;
+
             selection : out STD_LOGIC;
             both_ok : out STD_LOGIC;
             
@@ -62,7 +65,10 @@ architecture Behavioral of display is
                show_name : in STD_LOGIC;
                show_score : in STD_LOGIC;
                both_ok : out STD_LOGIC;
-               
+               save_score : in STD_LOGIC;
+               score_saved : out STD_LOGIC;
+                          reset_score : in STD_LOGIC;
+
                HLOC_IN : in integer; 
                VLOC_IN : in integer;
                
@@ -121,6 +127,9 @@ GC: grid_controller port map (
     
     show_name => show_name,
     show_score => show_score,
+    save_score => save_score,
+    score_saved => score_saved,
+    reset_score => reset_score,
     HLOC_IN => hloc_buff,
     VLOC_IN => vloc_buff,
     

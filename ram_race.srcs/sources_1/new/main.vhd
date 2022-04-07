@@ -11,7 +11,12 @@ entity main is
             JS2_UP, JS2_RIGHT, JS2_DOWN, JS2_LEFT, BTN2_ACT1, BTN2_ACT2  : in STD_LOGIC;
             
             -- State inputs
-            btnStart, save, reset : in STD_LOGIC;
+            btnStart, save,reset : in STD_LOGIC;
+            
+            sfx_mute : in STD_LOGIC;
+            msc_mute: in STD_LOGIC;
+            mute : in STD_LOGIC;
+
            
             -- Action button test
             P1_ACT1, P1_ACT2 : out STD_LOGIC;
@@ -61,7 +66,7 @@ architecture Behavioral of main is
     SIGNAL endGame_buffer : STD_LOGIC;
     
     -- State output buffers
-    SIGNAL menu_buffer, name_buffer, playing_buffer, score_buffer : STD_LOGIC;
+    SIGNAL menu_buffer, name_buffer, playing_buffer, score_buffer, save, reset_score_buff : STD_LOGIC;
     
     SIGNAL selection_s, score_s, both_ok_s : STD_LOGIC;
 
@@ -113,6 +118,8 @@ architecture Behavioral of main is
                 reset : in STD_LOGIC;
                 show_score : in STD_LOGIC;
                 show_name : in STD_LOGIC;
+                save_score : in STD_LOGIC;
+                score_saved : out STD_LOGIC;
                 P1_UP, P1_RIGHT, P1_DOWN, P1_LEFT : in STD_LOGIC;
                 P2_UP, P2_RIGHT, P2_DOWN, P2_LEFT : in STD_LOGIC;
                 
@@ -120,7 +127,8 @@ architecture Behavioral of main is
                 HSYNC : out STD_LOGIC;  
                 VSYNC : out STD_LOGIC;
                 both_ok : out STD_LOGIC;
-                
+              
+                reset_score : in STD_LOGIC;
                 sfx_mute : in STD_LOGIC;
                 msc_mute: in STD_LOGIC;
                 mute : in STD_LOGIC;
@@ -143,7 +151,7 @@ architecture Behavioral of main is
            endGame          : in STD_LOGIC;
            selection        : in STD_LOGIC;
            both_ok          : in STD_LOGIC;
-
+           reset_score      : out STD_LOGIC;
            score_out        : out STD_LOGIC;
            menu_out         : out STD_LOGIC;
            name_out         : out STD_LOGIC;
@@ -254,6 +262,8 @@ D1 : display port map (
     reset => menu_buffer,
     show_score => score_s,
     show_name => name_buffer,
+    save_score => score_buffer,
+    score_saved => save,
     P1_UP => p1_up_buff,
     P1_RIGHT => p1_right_buff,
     P1_DOWN => p1_down_buff,
@@ -268,7 +278,7 @@ D1 : display port map (
     P2_RIGHT => p2_right_buff,
     P2_DOWN => p2_down_buff,
     P2_LEFT => p2_left_buff,
-    
+    reset_score => reset_score_buff,
     endGame => endGame_buffer,
     
     selection => selection_s,
@@ -285,7 +295,7 @@ FSM : FSM_gameplay Port Map(   clk => clk_100,
                                btnStart => p1_menu_btn,
                                score_saved => save,
                                async_reset => p2_menu_btn,
-                               
+                               reset_score => reset_score_buff,
                                endGame => endGame_buffer,
                                selection => selection_s,
                                both_ok => both_ok_s,
