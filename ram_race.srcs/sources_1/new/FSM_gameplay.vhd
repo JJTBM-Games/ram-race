@@ -50,7 +50,7 @@ end FSM_gameplay;
 
 architecture Behavioral of FSM_gameplay is
 
-TYPE game_state IS (menu, starting, set_name, playing, save_score, show_score, button_reset);
+TYPE game_state IS (menu, starting, set_name, playing, save_score, show_score);
 
 SIGNAL state, next_state : game_state;
 
@@ -143,19 +143,6 @@ NSL : process (state)
                 save_score_out <= '0';
                 score_out <= '1';
                 reset_score <= '0';
-                if (btnStart = '0') then
-                    next_state <= button_reset; 
-                end if;
-            WHEN button_reset => 
-                menu_out <= '0';
-                name_out <= '0';
-                playing_out <= '0';
-                save_score_out <= '0';
-                score_out <= '1';
-                reset_score <= '0';
-                if (btnStart = '1') then
-                    next_state <= menu; 
-               end if;
         END CASE;        
     end process NSL;
 

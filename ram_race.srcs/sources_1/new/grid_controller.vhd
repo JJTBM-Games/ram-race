@@ -1503,6 +1503,10 @@ begin
                 time_minutes <= time_minutes + 1;
             end if;
             
+            if ( time_minutes = 10 ) then
+                time_minutes <= 0;
+                endGame <= '1';
+            end if;
             -- TODO: Check if time minutes is equal to 10, than time should be over, game will end
         end if;
         
