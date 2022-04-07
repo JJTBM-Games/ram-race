@@ -31,7 +31,7 @@ entity grid_controller is
            
            msc_out : out STD_LOGIC;
            sfx_out : out STD_LOGIC;
-           
+           creds            : in STD_LOGIC;
            P1_UP, P1_RIGHT, P1_DOWN, P1_LEFT : in STD_LOGIC;
            P2_UP, P2_RIGHT, P2_DOWN, P2_LEFT : in STD_LOGIC;
 
@@ -90,6 +90,10 @@ architecture Behavioral of grid_controller is
     signal score_transistion : STD_LOGIC := '1';
     signal score_transistion_ticks : integer := 0;
     signal score_transistion_count : integer := 0;
+    
+    signal creds_transistion : STD_LOGIC := '1';
+    signal creds_transistion_ticks : integer := 0;
+    signal creds_transistion_count : integer := 0;
     
     ---------------------------
     -- Powerup locations
@@ -286,7 +290,7 @@ architecture Behavioral of grid_controller is
     signal set_highscore : std_logic := '0';
     signal high_letter_1, high_letter_2, high_letter_3, high_letter_4 : integer := 0;
     signal highscore_saved : integer := 0;
-    signal score_ready : std_logic := '0';
+    signal score_ready, inv_engame : std_logic := '0';
     
     component highscores is 
             Port ( clk_100 : in STD_LOGIC;
@@ -315,6 +319,17 @@ architecture Behavioral of grid_controller is
                 addra : IN STD_LOGIC_VECTOR(11 DOWNTO 0);
                 douta : OUT STD_LOGIC_VECTOR(30 DOWNTO 0));    
     end component level;
+    
+    signal cre_addra : STD_LOGIC_VECTOR( 10 downto 0 );
+    signal cre_douta : STD_LOGIC_VECTOR( 30 downto 0 );
+   
+    component credits_sprite is
+            port (
+                clka : IN STD_LOGIC;
+                ena : IN STD_LOGIC;
+                addra : IN STD_LOGIC_VECTOR(10 DOWNTO 0);
+                douta : OUT STD_LOGIC_VECTOR(30 DOWNTO 0));    
+    end component credits_sprite;
     
     signal score_addra : STD_LOGIC_VECTOR( 10 downto 0 );
     signal score_douta : STD_LOGIC_VECTOR( 30 downto 0 );
@@ -427,7 +442,7 @@ begin
 selection <= sel_position;
 sfx_sel <= "01";
 sfx_en <= lazer_tick;
-
+inv_engame <= not(enGame);
 score_ram : highscores port map(
                clk_100 => clk_100,
                L1 => high_1,
@@ -449,6 +464,14 @@ scores : score_screen port map(
     
     addra => score_addra,
     douta => score_douta
+    );
+    
+    credits : credits_sprite port map(
+    clka => CLK_400,
+    ena => '1',
+    
+    addra => cre_addra,
+    douta => cre_douta
     );
 
 levels : level port map(
@@ -519,7 +542,7 @@ S: sound Port Map(
            clk_in => CLK_100, 
            en_msc => msc_en,
            en_sfx => sfx_en,
-           sfx_mute => sfx_mute,
+           sfx_mute => inv_engame,
            msc_mute => msc_mute,
            mute => mute,
            msc_out => msc_out,
@@ -555,6 +578,7 @@ begin
     end if;
 end process;
 
+
 current_cell_sprite : process(CLK_100)
 begin
     if (rising_edge(CLK_100)) then
@@ -577,7 +601,12 @@ begin
     
             p1_break_walls(0)  <= 494;
             p2_break_walls(0)  <= 507;
-
+            
+            level_transistion <= '1';
+            score_transistion <= '1';
+            name_transistion <= '1';
+            creds_transistion <= '1';
+--            sfx_en <= '0';
         end if;
         
        
@@ -635,6 +664,21 @@ begin
                 cellSpriteNumber <= to_integer(unsigned(name_douta));
             end if;
         
+        elsif (creds = '1') then
+
+            if (creds_transistion = '1') then
+                if (cellNumber <= creds_transistion_count) then
+                    cre_addra <=  std_logic_vector(to_unsigned(cellNumber - 1, 11));
+                    cellSpriteNumber <= to_integer(unsigned(cre_douta));
+                else
+                    level_addra <=  std_logic_vector(to_unsigned(((current_level - 1) * 1200) + cellNumber - 1, 12));
+                    cellSpriteNumber <= to_integer(unsigned(level_douta));
+                end if;
+            else
+                cre_addra <=  std_logic_vector(to_unsigned(cellNumber - 1, 11));
+                    cellSpriteNumber <= to_integer(unsigned(cre_douta));
+            end if;
+            
         -- If enGame = 1 (playing) and reset (menu) = 0, show current level
         elsif (enGame = '1' AND reset = '0') then 
             msc_sel <= "00";
@@ -1445,6 +1489,20 @@ begin
                 if (score_transistion_count = 1200) then
                     score_transistion_count <= 0;
                     score_transistion <= '0';
+                end if;
+            end if;
+        end if;
+        
+        if (creds_transistion = '1' AND creds = '1') then
+            creds_transistion_ticks <= creds_transistion_ticks + 1;
+            
+            if (creds_transistion_ticks = 100_000) then
+                creds_transistion_ticks <= 0;
+                creds_transistion_count <= creds_transistion_count + 1;
+                
+                if (creds_transistion_count = 1200) then
+                    creds_transistion_count <= 0;
+                    creds_transistion <= '0';
                 end if;
             end if;
         end if;

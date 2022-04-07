@@ -62,7 +62,7 @@ architecture Behavioral of main is
     SIGNAL p1_menu_btn, p2_menu_btn : STD_LOGIC;
     
     -- PLOC for checking winner
-    SIGNAL endGame_buffer : STD_LOGIC;
+    SIGNAL endGame_buffer, creds_buffer : STD_LOGIC;
     
     -- State output buffers
     SIGNAL menu_buffer, name_buffer, playing_buffer, score_buffer, save, reset_score_buff : STD_LOGIC;
@@ -121,7 +121,7 @@ architecture Behavioral of main is
                 score_saved : out STD_LOGIC;
                 P1_UP, P1_RIGHT, P1_DOWN, P1_LEFT : in STD_LOGIC;
                 P2_UP, P2_RIGHT, P2_DOWN, P2_LEFT : in STD_LOGIC;
-                
+                creds            : in STD_LOGIC;
                 endGame : out STD_LOGIC;
                 HSYNC : out STD_LOGIC;  
                 VSYNC : out STD_LOGIC;
@@ -156,7 +156,9 @@ architecture Behavioral of main is
            menu_out         : out STD_LOGIC;
            name_out         : out STD_LOGIC;
            playing_out      : out STD_LOGIC;
-           save_score_out   : out STD_LOGIC );
+           save_score_out   : out STD_LOGIC;
+           creds            : out STD_LOGIC );
+
     end COMPONENT FSM_gameplay;
 begin
 
@@ -281,7 +283,7 @@ D1 : display port map (
     P2_LEFT => p2_left_buff,
     reset_score => reset_score_buff,
     endGame => endGame_buffer,
-    
+    creds => creds_buffer,
     selection => selection_s,
     
     HSYNC =>  HSYNC,
@@ -304,6 +306,7 @@ FSM : FSM_gameplay Port Map(   clk => clk_100,
                                menu_out => menu_buffer,
                                name_out => name_buffer,
                                playing_out => playing_buffer,
-                               save_score_out => score_buffer);
+                               save_score_out => score_buffer,
+                               creds => creds_buffer);
            
 end Behavioral;
