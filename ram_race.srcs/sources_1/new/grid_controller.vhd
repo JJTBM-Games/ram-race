@@ -23,6 +23,13 @@ entity grid_controller is
            endGame : out STD_LOGIC;
            selection : out STD_LOGIC;
            both_ok : out STD_LOGIC;
+                       
+           sfx_mute : in STD_LOGIC;
+           msc_mute: in STD_LOGIC;
+           mute : in STD_LOGIC;
+           
+           msc_out : out STD_LOGIC;
+           sfx_out : out STD_LOGIC;
            
            P1_UP, P1_RIGHT, P1_DOWN, P1_LEFT : in STD_LOGIC;
            P2_UP, P2_RIGHT, P2_DOWN, P2_LEFT : in STD_LOGIC;
@@ -31,6 +38,9 @@ entity grid_controller is
 end grid_controller;
 
 architecture Behavioral of grid_controller is
+    
+
+
 
     constant HD : integer := 640;      -- Horizontal display (640 pixels) 
     constant VD : integer := 480;      -- Vertical display (480 pixels)
@@ -72,6 +82,14 @@ architecture Behavioral of grid_controller is
     signal level_transistion_ticks : integer := 0;
     signal level_transistion_count : integer := 0;
     
+    signal name_transistion : STD_LOGIC := '1';
+    signal name_transistion_ticks : integer := 0;
+    signal name_transistion_count : integer := 0;
+    
+    signal score_transistion : STD_LOGIC := '1';
+    signal score_transistion_ticks : integer := 0;
+    signal score_transistion_count : integer := 0;
+    
     ---------------------------
     -- Powerup locations
     type locations10 is array (0 to 9) of integer;
@@ -95,6 +113,11 @@ architecture Behavioral of grid_controller is
     signal time_seconds : integer := 0;
     signal time_seconds_tens : integer := 0;
     signal time_minutes : integer := 0;
+
+    signal msc_sel, sfx_sel : STD_LOGIC_VECTOR(1 downto 0);
+    signal msc_en : STD_LOGIC := '1';
+    signal sfx_en : STD_LOGIC := '0';
+    signal sfx_count : integer := 0;
     
     ---------------------------
     -- Lazer signals
@@ -381,9 +404,28 @@ architecture Behavioral of grid_controller is
                 douta : OUT STD_LOGIC_VECTOR(11 DOWNTO 0));    
     end component npc;
     
+    
+    
+    
+    COMPONENT sound is
+    Port ( clk_in : in STD_LOGIC;
+           en_msc : in STD_LOGIC;
+           en_sfx : in STD_LOGIC;
+           sfx_mute : in STD_LOGIC;
+           msc_mute: in STD_LOGIC;
+           mute : in STD_LOGIC;
+           msc_out : out STD_LOGIC;
+           sfx_out : out STD_LOGIC;
+           msc_sel : in STD_LOGIC_VECTOR(1 downto 0);
+           sfx_sel : in STD_LOGIC_VECTOR(1 downto 0)
+           );
+    end COMPONENT sound;
+    
 begin
 
 selection <= sel_position;
+sfx_sel <= "01";
+sfx_en <= lazer_tick;
 
 score_ram : highscores port map(
                clk_100 => clk_100,
@@ -472,6 +514,18 @@ npcs : npc port map (
     douta => npc_douta
 );
 
+S: sound Port Map(
+           clk_in => CLK_100, 
+           en_msc => msc_en,
+           en_sfx => sfx_en,
+           sfx_mute => sfx_mute,
+           msc_mute => msc_mute,
+           mute => mute,
+           msc_out => msc_out,
+           sfx_out => sfx_out,
+           msc_sel => msc_sel,
+           sfx_sel => sfx_sel);
+
 current_cell_number : process(CLK_400)
 begin
     if (rising_edge(CLK_400)) then
@@ -532,9 +586,11 @@ begin
             p1_loc <= 1130;
             p2_loc <= 1151;
         END IF;
+        
     
         -- If enGame = 0 (playing) and reset (menu) = 1, then show main menu
-        if (enGame = '0' AND reset = '1') then   
+        if (enGame = '0' AND reset = '1') then  
+            msc_sel <= "01";
             menu_addra <=  std_logic_vector(to_unsigned(cellNumber - 1, 11));
             cellSpriteNumber <= to_integer(unsigned(menu_douta));
             if ( p1_up = '1' ) then
@@ -542,17 +598,33 @@ begin
             elsif ( p1_down = '1') then
                 sel_position <= '1';
             end if;
-            
+   
         elsif ( show_score = '1' ) then
             score_addra <=  std_logic_vector(to_unsigned(cellNumber - 1, 11));
             cellSpriteNumber <= to_integer(unsigned(score_douta));
+            msc_sel <= "10";
+
         
         elsif (show_name = '1') then
-            name_addra <=  std_logic_vector(to_unsigned(cellNumber - 1, 11));
-            cellSpriteNumber <= to_integer(unsigned(name_douta));
+            msc_sel <= "10";
+                   
+            if (name_transistion = '1') then
+                if (cellNumber <= name_transistion_count) then
+                    name_addra <=  std_logic_vector(to_unsigned(cellNumber - 1, 11));
+                    cellSpriteNumber <= to_integer(unsigned(name_douta));
+                else
+                    menu_addra <=  std_logic_vector(to_unsigned(cellNumber - 1, 11));
+                    cellSpriteNumber <= to_integer(unsigned(menu_douta));
+                end if;
+            else
+                name_addra <=  std_logic_vector(to_unsigned(cellNumber - 1, 11));
+                cellSpriteNumber <= to_integer(unsigned(name_douta));
+            end if;
         
         -- If enGame = 1 (playing) and reset (menu) = 0, show current level
         elsif (enGame = '1' AND reset = '0') then 
+            msc_sel <= "00";
+        
             if (level_transistion = '1') then
                 if (cellNumber <= level_transistion_count) then
                     level_addra <=  std_logic_vector(to_unsigned(cellNumber - 1, 11));
@@ -1279,17 +1351,55 @@ begin
             end if;
         end if;
         
-        -- Start countdown
-        if( enGame = '1') then
-        if (level_start_count /= 0) then
-            level_start_count_ticks <= level_start_count_ticks + 1;
         
-            if (level_start_count_ticks = 100000000) then
-                level_start_count <= level_start_count - 1;
+        -- Set name transistion counter
+        if (name_transistion = '1' AND show_name = '1') then
+            name_transistion_ticks <= name_transistion_ticks + 1;
+            
+            if (name_transistion_ticks = 100_000) then
+                name_transistion_ticks <= 0;
+                name_transistion_count <= name_transistion_count + 1;
                 
-                level_start_count_ticks <= 0;
-            end if; 
+                if (name_transistion_count = 1200) then
+                    name_transistion <= '0';
+                end if;
+            end if;
         end if;
+        
+        -- 0x0 level
+        -- 0x1 menu
+        -- 0x2 name/score
+        
+        -- 0x0 finish
+        -- 0x1 ++
+        -- 0x2 --
+        -- 0x3 dead
+        
+        -- High score transistion counter
+        if (score_transistion = '1' AND show_score = '1') then
+            score_transistion_ticks <= score_transistion_ticks + 1;
+            
+            if (score_transistion_ticks = 100_000) then
+                score_transistion_ticks <= 0;
+                score_transistion_count <= score_transistion_count + 1;
+                
+                if (score_transistion_count = 1200) then
+                    score_transistion <= '0';
+                end if;
+            end if;
+        end if;
+        
+        -- Start countdown
+        if( enGame = '1' ) then
+            if (level_start_count /= 0) then
+                level_start_count_ticks <= level_start_count_ticks + 1;
+            
+                if (level_start_count_ticks = 100000000) then
+                    level_start_count <= level_start_count - 1;
+                    
+                    level_start_count_ticks <= 0;
+                end if; 
+            end if;
         end if;
         
         -- Shield timers
@@ -1375,42 +1485,40 @@ begin
         
         -- Shield
         ELSIF (p1_loc = shield_locations1(current_level)) THEN
-            shield_locations1(current_level) <= -1;
-            p1_powerup <= 1;
-            p1_score <= p1_score + 5;
+            if (p1_powerup /= 7) then
+                shield_locations1(current_level) <= -1;
+                p1_powerup <= 1;
+                p1_score <= p1_score + 5;
+            end if;
         ELSIF (p2_loc = shield_locations2(current_level)) THEN
-            shield_locations2(current_level) <= -1;
-            p2_powerup <= 1;
-            p2_score <= p2_score + 5;
+            if (p1_powerup /= 7) then
+                shield_locations2(current_level) <= -1;
+                p2_powerup <= 1;
+                p2_score <= p2_score + 5;
+            end if;
         
         -- 10 Points crystal
         ELSIF (p1_loc = crystal1_locations1(current_level)) THEN
             crystal1_locations1(current_level) <= -1;
-            p1_powerup <= 2;
             p1_score <= p1_score + 10;
         ELSIF (p2_loc = crystal1_locations2(current_level)) THEN
             crystal1_locations2(current_level) <= -1;
-            p2_powerup <= 2;
             p2_score <= p2_score + 10;
         
         -- 15 Points crystal
         ELSIF (p1_loc = crystal2_locations1(current_level)) THEN
             crystal2_locations1(current_level) <= -1;
-            p1_powerup <= 2;
             p1_score <= p1_score + 15;
         ELSIF (p2_loc = crystal2_locations2(current_level)) THEN
             crystal2_locations2(current_level) <= -1;
-            p2_powerup <= 2;
             p2_score <= p2_score + 15;
             
          -- 20 Points crystal
         ELSIF (p1_loc = crystal3_locations1(current_level)) THEN
             crystal3_locations1(current_level) <= -1;
-            p1_powerup <= 2;
             p1_score <= p1_score + 20;
         ELSIF (p2_loc = crystal3_locations2(current_level)) THEN
             crystal3_locations2(current_level) <= -1;
-            p2_powerup <= 2;
             p2_score <= p2_score + 20;
             
         -- Break walls
@@ -1442,6 +1550,9 @@ begin
                     damage_p1 <= '1';
                     p1_loc <= 1130;
                     
+                    sfx_sel <= "11";
+                    
+                    
                     if (p1_score > 0 ) then
                         p1_score <= p1_score - 1;
                     end if;
@@ -1454,6 +1565,9 @@ begin
                 else
                     damage_p1 <= '1';
                     p1_loc <= 1130;
+                    
+                    sfx_sel <= "11";
+                    
                     
                     if (p1_score > 0 ) then
                         p1_score <= p1_score - 1;

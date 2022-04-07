@@ -11,16 +11,24 @@ entity main is
             JS2_UP, JS2_RIGHT, JS2_DOWN, JS2_LEFT, BTN2_ACT1, BTN2_ACT2  : in STD_LOGIC;
             
             -- State inputs
-            btnStart, reset : in STD_LOGIC;
+            btnStart, save,reset : in STD_LOGIC;
             
             sfx_mute : in STD_LOGIC;
             msc_mute: in STD_LOGIC;
             mute : in STD_LOGIC;
+
            
             -- Action button test
             P1_ACT1, P1_ACT2 : out STD_LOGIC;
             
             P2_ACT1, P2_ACT2 : out STD_LOGIC;
+            
+            -- Sound
+            sfx_mute : in STD_LOGIC;
+            msc_mute: in STD_LOGIC;
+            mute : in STD_LOGIC;
+            msc_out : out STD_LOGIC;
+            sfx_out : out STD_LOGIC;
 
             -- VGA values
             HSYNC : out STD_LOGIC;  
@@ -28,10 +36,7 @@ entity main is
             
             RED : out STD_LOGIC_VECTOR (0 to 3); 
             GREEN : out STD_LOGIC_VECTOR (0 to 3);
-            BLUE : out STD_LOGIC_VECTOR (0 to 3);
-            
-            msc_out : out STD_LOGIC;
-            sfx_out : out STD_LOGIC );
+            BLUE : out STD_LOGIC_VECTOR (0 to 3));
 end main;
 
 architecture Behavioral of main is
@@ -74,17 +79,6 @@ architecture Behavioral of main is
                 CLK_25MHz : out STD_LOGIC;
                 CLK_400MHz : out STD_LOGIC);
     end component clk_25;
-    
-    COMPONENT sound is
-    Port ( msc_out : out STD_LOGIC;
-            sfx_out : out STD_LOGIC;
-           clk_in : in STD_LOGIC;
-           en : in STD_LOGIC;
-           sfx_mute : in STD_LOGIC;
-           msc_mute: in STD_LOGIC;
-           mute : in STD_LOGIC
-           );
-    end COMPONENT sound;
     
     component controls is
         Port (  CLK : in STD_LOGIC;
@@ -133,7 +127,14 @@ architecture Behavioral of main is
                 HSYNC : out STD_LOGIC;  
                 VSYNC : out STD_LOGIC;
                 both_ok : out STD_LOGIC;
+              
                 reset_score : in STD_LOGIC;
+                sfx_mute : in STD_LOGIC;
+                msc_mute: in STD_LOGIC;
+                mute : in STD_LOGIC;
+               
+                msc_out : out STD_LOGIC;
+                sfx_out : out STD_LOGIC;
 
                 selection : out STD_LOGIC;
 
@@ -268,6 +269,11 @@ D1 : display port map (
     P1_DOWN => p1_down_buff,
     P1_LEFT => p1_left_buff,
     both_ok => both_ok_s,
+    sfx_mute => sfx_mute,
+    msc_mute => msc_mute,
+    mute => mute,
+    msc_out => msc_out,
+    sfx_out => sfx_out,
     P2_UP => p2_up_buff,
     P2_RIGHT => p2_right_buff,
     P2_DOWN => p2_down_buff,
@@ -298,14 +304,5 @@ FSM : FSM_gameplay Port Map(   clk => clk_100,
                                name_out => name_buffer,
                                playing_out => playing_buffer,
                                save_score_out => score_buffer);
-
-S: sound Port Map( msc_out => msc_out,
-            sfx_out => sfx_out,
-           clk_in => CLK_100,
-           en => '1',
-           sfx_mute => sfx_mute,
-           msc_mute => msc_mute,
-           mute => mute
-           );
            
 end Behavioral;

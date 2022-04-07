@@ -75,8 +75,10 @@
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PSRCDIR/sources_1/new/bpm_gen.vhd">
+      <File Path="$PSRCDIR/sources_1/imports/src/bpm_gen.vhd">
         <FileInfo>
+          <Attr Name="ImportPath" Val="$PPRDIR/../../../Desktop/src/bpm_gen.vhd"/>
+          <Attr Name="ImportTime" Val="1649152086"/>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
@@ -87,14 +89,18 @@
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PSRCDIR/sources_1/new/clock_gen.vhd">
+      <File Path="$PSRCDIR/sources_1/imports/src/clock_gen.vhd">
         <FileInfo>
+          <Attr Name="ImportPath" Val="$PPRDIR/../../../Desktop/src/clock_gen.vhd"/>
+          <Attr Name="ImportTime" Val="1649230662"/>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PSRCDIR/sources_1/new/control.vhd">
+      <File Path="$PSRCDIR/sources_1/imports/src/control.vhd">
         <FileInfo>
+          <Attr Name="ImportPath" Val="$PPRDIR/../../../Desktop/src/control.vhd"/>
+          <Attr Name="ImportTime" Val="1649231721"/>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
@@ -129,20 +135,26 @@
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PSRCDIR/sources_1/new/msc_player.vhd">
+      <File Path="$PSRCDIR/sources_1/imports/src/msc_player.vhd">
         <FileInfo>
+          <Attr Name="ImportPath" Val="$PPRDIR/../../../Desktop/src/msc_player.vhd"/>
+          <Attr Name="ImportTime" Val="1649190701"/>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PSRCDIR/sources_1/new/music.vhd">
+      <File Path="$PSRCDIR/sources_1/imports/src/music.vhd">
         <FileInfo>
+          <Attr Name="ImportPath" Val="$PPRDIR/../../../Desktop/src/music.vhd"/>
+          <Attr Name="ImportTime" Val="1649190705"/>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PSRCDIR/sources_1/new/music_player.vhd">
+      <File Path="$PSRCDIR/sources_1/imports/src/music_player.vhd">
         <FileInfo>
+          <Attr Name="ImportPath" Val="$PPRDIR/../../../Desktop/src/music_player.vhd"/>
+          <Attr Name="ImportTime" Val="1649231329"/>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
@@ -165,20 +177,50 @@
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PSRCDIR/sources_1/new/sound.vhd">
+      <File Path="$PSRCDIR/sources_1/imports/src/sfx.vhd">
         <FileInfo>
+          <Attr Name="ImportPath" Val="$PPRDIR/../../../Desktop/src/sfx.vhd"/>
+          <Attr Name="ImportTime" Val="1649195821"/>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PSRCDIR/sources_1/new/sound_gen.vhd">
+      <File Path="$PSRCDIR/sources_1/imports/src/sfx_play_unit.vhd">
         <FileInfo>
+          <Attr Name="ImportPath" Val="$PPRDIR/../../../Desktop/src/sfx_play_unit.vhd"/>
+          <Attr Name="ImportTime" Val="1649230932"/>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PSRCDIR/sources_1/new/square_wave_synth.vhd">
+      <File Path="$PSRCDIR/sources_1/imports/src/sfx_player.vhd">
         <FileInfo>
+          <Attr Name="ImportPath" Val="$PPRDIR/../../../Desktop/src/sfx_player.vhd"/>
+          <Attr Name="ImportTime" Val="1649194425"/>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
+      <File Path="$PSRCDIR/sources_1/imports/src/sound.vhd">
+        <FileInfo>
+          <Attr Name="ImportPath" Val="$PPRDIR/../../../Desktop/src/sound.vhd"/>
+          <Attr Name="ImportTime" Val="1649188373"/>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
+      <File Path="$PSRCDIR/sources_1/imports/src/sound_gen.vhd">
+        <FileInfo>
+          <Attr Name="ImportPath" Val="$PPRDIR/../../../Desktop/src/sound_gen.vhd"/>
+          <Attr Name="ImportTime" Val="1649195499"/>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
+      <File Path="$PSRCDIR/sources_1/imports/src/square_wave_synth.vhd">
+        <FileInfo>
+          <Attr Name="ImportPath" Val="$PPRDIR/../../../Desktop/src/square_wave_synth.vhd"/>
+          <Attr Name="ImportTime" Val="1649193539"/>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
@@ -451,11 +493,12 @@
       <ReportStrategy Name="Vivado Synthesis Default Reports" Flow="Vivado Synthesis 2019"/>
       <Report Name="ROUTE_DESIGN.REPORT_METHODOLOGY" Enabled="1"/>
     </Run>
-    <Run Id="asset_sprites_synth_1" Type="Ft3:Synth" SrcSet="asset_sprites" Part="xc7a35tcpg236-1" ConstrsSet="asset_sprites" Description="Vivado Synthesis Defaults" AutoIncrementalCheckpoint="false" WriteIncrSynthDcp="false" IncludeInArchive="true">
+    <Run Id="asset_sprites_synth_1" Type="Ft3:Synth" SrcSet="asset_sprites" Part="xc7a35tcpg236-1" ConstrsSet="asset_sprites" Description="Vivado Synthesis Defaults" AutoIncrementalCheckpoint="false" WriteIncrSynthDcp="false" Dir="$PRUNDIR/asset_sprites_synth_1" IncludeInArchive="true">
       <Strategy Version="1" Minor="2">
         <StratHandle Name="Vivado Synthesis Defaults" Flow="Vivado Synthesis 2019"/>
         <Step Id="synth_design"/>
       </Strategy>
+      <GeneratedRun Dir="$PRUNDIR" File="gen_run.xml"/>
       <ReportStrategy Name="Vivado Synthesis Default Reports" Flow="Vivado Synthesis 2019"/>
       <Report Name="ROUTE_DESIGN.REPORT_METHODOLOGY" Enabled="1"/>
     </Run>
