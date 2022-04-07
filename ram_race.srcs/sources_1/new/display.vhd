@@ -14,6 +14,13 @@ entity display is
             
             selection : out STD_LOGIC;
             both_ok : out STD_LOGIC;
+            
+            sfx_mute : in STD_LOGIC;
+            msc_mute: in STD_LOGIC;
+            mute : in STD_LOGIC;
+           
+            msc_out : out STD_LOGIC;
+            sfx_out : out STD_LOGIC;
 
             endGame : out STD_LOGIC;
             HSYNC : out STD_LOGIC;  
@@ -63,6 +70,13 @@ architecture Behavioral of display is
                selection : out STD_LOGIC;
                P1_UP, P1_RIGHT, P1_DOWN, P1_LEFT : in STD_LOGIC;
                P2_UP, P2_RIGHT, P2_DOWN, P2_LEFT : in STD_LOGIC;
+               
+               sfx_mute : in STD_LOGIC;
+               msc_mute: in STD_LOGIC;
+               mute : in STD_LOGIC;
+           
+               msc_out : out STD_LOGIC;
+               sfx_out : out STD_LOGIC;
     
                RGB_DATA : out STD_LOGIC_VECTOR (0 TO 11));
     end component grid_controller;
@@ -113,6 +127,14 @@ GC: grid_controller port map (
     endGame => endGame,
     selection => selection,
     both_ok => both_ok,
+    
+    sfx_mute => sfx_mute,
+    msc_mute => msc_mute,
+    mute => mute,
+
+    msc_out => msc_out,
+    sfx_out => sfx_out,
+    
     P1_UP => P1_UP,
     P1_RIGHT => P1_RIGHT,
     P1_DOWN => P1_DOWN,
