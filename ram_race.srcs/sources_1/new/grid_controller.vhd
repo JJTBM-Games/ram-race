@@ -79,6 +79,10 @@ architecture Behavioral of grid_controller is
     signal current_level : integer := 0;
     signal start_level : STD_LOGIC := '0';
     
+    signal menu_transistion : STD_LOGIC := '1';
+    signal menu_transistion_ticks : integer := 0;
+    signal menu_transistion_count : integer := 0;
+    
     signal level_transistion : STD_LOGIC := '1';
     signal level_transistion_ticks : integer := 0;
     signal level_transistion_count : integer := 0;
@@ -123,6 +127,8 @@ architecture Behavioral of grid_controller is
     signal msc_en : STD_LOGIC := '1';
     signal sfx_en : STD_LOGIC := '0';
     signal sfx_count : integer := 0;
+    signal en_pickup : STD_LOGIC;
+    signal en_use : STD_LOGIC;
     
     ---------------------------
     -- Lazer signals
@@ -286,6 +292,8 @@ architecture Behavioral of grid_controller is
     constant hs_num_10 : integer := 89;
     constant hs_num_1 : integer := 88;
     
+    constant black : integer := 91;
+    
     signal high_1, high_2, high_3, high_4, score_to_save : integer := 0;
     signal set_highscore : std_logic := '0';
     signal high_letter_1, high_letter_2, high_letter_3, high_letter_4 : integer := 0;
@@ -440,8 +448,8 @@ architecture Behavioral of grid_controller is
 begin
 
 selection <= sel_position;
-sfx_sel <= "01";
-sfx_en <= lazer_tick;
+--sfx_sel <= "01";
+--sfx_en <= lazer_tick;
 inv_engame <= not(enGame);
 score_ram : highscores port map(
                clk_100 => clk_100,
@@ -598,9 +606,28 @@ begin
             crystal2_locations2(0)  <= 742;
             crystal3_locations1(0)  <= 402;
             crystal3_locations2(0) <= 439;
+            
+             bw_locations1(1)  <= 539;
+            bw_locations2(1)  <= 542;
+            shield_locations1(1)  <= 1125;
+            shield_locations2(1)  <= 1156;
+            crystal1_locations1(1)  <= 1097;
+            crystal1_locations2(1)  <= 1104;
+            crystal2_locations1(1)  <= 739;
+            crystal2_locations2(1)  <= 742;
+            crystal3_locations1(1)  <= 402;
+            crystal3_locations2(1) <= 439;
+            
+            bw_locations1(2)  <= 242;
+            bw_locations2(2)  <= 279;
     
             p1_break_walls(0)  <= 494;
             p2_break_walls(0)  <= 507;
+            p1_break_walls(1)  <= 336;
+            p2_break_walls(1)  <= 345;
+            p1_break_walls(2)  <= 378;
+            p2_break_walls(2)  <= 383;
+            
             
             level_transistion <= '1';
             score_transistion <= '1';
@@ -621,8 +648,23 @@ begin
         -- If enGame = 0 (playing) and reset (menu) = 1, then show main menu
         if (enGame = '0' AND reset = '1') then  
             msc_sel <= "01";
-            menu_addra <=  std_logic_vector(to_unsigned(cellNumber - 1, 11));
-            cellSpriteNumber <= to_integer(unsigned(menu_douta));
+            
+            
+            if (menu_transistion = '1') then
+                if (cellNumber <= menu_transistion_count) then
+                    menu_addra <=  std_logic_vector(to_unsigned(cellNumber - 1, 11));
+                    cellSpriteNumber <= to_integer(unsigned(menu_douta));
+                else
+                    cellSpriteNumber <= black;
+                end if;
+            else
+                menu_addra <=  std_logic_vector(to_unsigned(cellNumber - 1, 11));
+                cellSpriteNumber <= to_integer(unsigned(menu_douta));
+            end if;
+            
+            
+            
+            
             if ( p1_up = '1' ) then
                 sel_position <= '0';
             elsif ( p1_down = '1') then
@@ -630,6 +672,7 @@ begin
             end if;
    
         elsif ( show_score = '1' ) then
+            menu_transistion <= '1';
             score_addra <=  std_logic_vector(to_unsigned(cellNumber - 1, 11));
             cellSpriteNumber <= to_integer(unsigned(score_douta));
             msc_sel <= "10";
@@ -649,6 +692,8 @@ begin
 
         
         elsif (show_name = '1') then
+            menu_transistion <= '1';
+
             msc_sel <= "10";
                    
             if (name_transistion = '1') then
@@ -1192,7 +1237,9 @@ begin
         elsif (cellSpriteNumber = colon_sn) then -- Colon
             font_addra <= std_logic_vector(to_unsigned(((colon_sn * 256) + cellPixel), 14));
             RGB_DATA <= font_douta; 
-
+        elsif ( cellSpriteNumber = black ) then
+            RGB_DATA <= "000000000000";
+        
         elsif (cellSpriteNumber = powerup_slot1_sn) then -- Powerup slot / start count display
             if (level_start_count /= 0) then
                 font_addra <= std_logic_vector(to_unsigned((((29 + level_start_count) * 256) + cellPixel), 14));
@@ -1453,6 +1500,20 @@ begin
             end if;
         end if;
         
+        if (menu_transistion = '1' AND reset = '1') then
+            menu_transistion_ticks <= menu_transistion_ticks + 1;
+            
+            if (menu_transistion_ticks = 100_000) then
+                menu_transistion_ticks <= 0;
+                menu_transistion_count <= menu_transistion_count + 1;
+                
+                if (menu_transistion_count = 1200) then
+                    menu_transistion_count <= 0;
+                    menu_transistion <= '0';
+                end if;
+            end if;
+        end if;
+        
         
         -- Set name transistion counter
         if (name_transistion = '1' AND show_name = '1') then
@@ -1604,56 +1665,78 @@ begin
             bw_locations1(current_level) <= -1;
             p1_powerup <= 7;
             p1_score <= p1_score + 5;
+            en_pickup <= '1';
         ELSIF (p2_loc = bw_locations2(current_level)) THEN
             bw_locations2(current_level) <= -1;
             p2_powerup <= 7;
             p2_score <= p2_score + 5;
-        
+                    en_pickup <= '1';
+
         -- Shield
         ELSIF (p1_loc = shield_locations1(current_level)) THEN
             if (p1_powerup /= 7) then
                 shield_locations1(current_level) <= -1;
                 p1_powerup <= 1;
                 p1_score <= p1_score + 5;
+                            en_pickup <= '1';
+
             end if;
         ELSIF (p2_loc = shield_locations2(current_level)) THEN
             if (p1_powerup /= 7) then
                 shield_locations2(current_level) <= -1;
                 p2_powerup <= 1;
                 p2_score <= p2_score + 5;
+                            en_pickup <= '1';
+
             end if;
         
         -- 10 Points crystal
         ELSIF (p1_loc = crystal1_locations1(current_level)) THEN
             crystal1_locations1(current_level) <= -1;
             p1_score <= p1_score + 10;
+                        en_pickup <= '1';
+
         ELSIF (p2_loc = crystal1_locations2(current_level)) THEN
             crystal1_locations2(current_level) <= -1;
             p2_score <= p2_score + 10;
+                        en_pickup <= '1';
+
         
         -- 15 Points crystal
         ELSIF (p1_loc = crystal2_locations1(current_level)) THEN
             crystal2_locations1(current_level) <= -1;
             p1_score <= p1_score + 15;
+                        en_pickup <= '1';
+
         ELSIF (p2_loc = crystal2_locations2(current_level)) THEN
             crystal2_locations2(current_level) <= -1;
             p2_score <= p2_score + 15;
+                        en_pickup <= '1';
+
             
          -- 20 Points crystal
         ELSIF (p1_loc = crystal3_locations1(current_level)) THEN
             crystal3_locations1(current_level) <= -1;
             p1_score <= p1_score + 20;
+                        en_pickup <= '1';
+
         ELSIF (p2_loc = crystal3_locations2(current_level)) THEN
             crystal3_locations2(current_level) <= -1;
             p2_score <= p2_score + 20;
+                        en_pickup <= '1';
+
             
         -- Break walls
          ELSIF (p1_loc = p1_break_walls(current_level)) THEN
             p1_break_walls(current_level) <= -1;
             p1_powerup <= -1;
+                        en_use <= '1';
+
          ELSIF (p2_loc = p2_break_walls(current_level)) THEN
             p2_break_walls(current_level) <= -1;
             p2_powerup <= -1;
+                                    en_use <= '1';
+
         
         -- Reset  
         ELSIF (reset = '1') THEN
@@ -1672,6 +1755,8 @@ begin
             if lazer_tick = '1' then
                 if (p1_powerup = 1) then
                     p1_shield_remove <= '1';
+                                            en_use <= '1';
+
                 else
                     damage_p1 <= '1';
                     p1_loc <= 1130;
@@ -1686,6 +1771,8 @@ begin
             if lazer_tick = '1' then
                 if (p1_powerup = 1) then
                     p1_shield_remove <= '1';
+                                            en_use <= '1';
+
                 else
                     damage_p1 <= '1';
                     p1_loc <= 1130;
@@ -1698,6 +1785,8 @@ begin
             if lazer_tick = '1' then
                 if (p1_powerup = 1) then
                      p1_shield_remove <= '1';
+                                             en_use <= '1';
+
                 else
                     damage_p1 <= '1';
                     p1_loc <= 1130;
@@ -1711,6 +1800,8 @@ begin
             if lazer_tick = '1' then
                 if (p1_powerup = 1) then
                     p1_shield_remove <= '1';
+                                            en_use <= '1';
+
                 else
                     damage_p1 <= '1';
                     p1_loc <= 1130;
@@ -1728,6 +1819,8 @@ begin
             if lazer_tick = '1' then
                 if (p2_powerup = 1) then
                      p2_shield_remove <= '1';
+                                             en_use <= '1';
+
                 else
                     damage_p2 <= '1';
                     p2_loc <= 1151;
@@ -1741,6 +1834,8 @@ begin
             if lazer_tick = '1' then
                 if (p2_powerup = 1) then
                     p2_shield_remove <= '1';
+                                            en_use <= '1';
+
                 else
                     damage_p2 <= '1';
                     p2_loc <= 1151;
@@ -1754,6 +1849,8 @@ begin
             if lazer_tick = '1' then
                 if (p2_powerup = 1) then
                      p2_shield_remove <= '1';
+                                             en_use <= '1';
+
                 else
                     damage_p2 <= '1';
                     p2_loc <= 1151;
@@ -1767,6 +1864,8 @@ begin
             if lazer_tick = '1' then
                 if (p2_powerup = 1) then
                     p2_shield_remove <= '1';
+                                            en_use <= '1';
+
                 else
                     damage_p2 <= '1';
                     p2_loc <= 1151;
@@ -1801,7 +1900,27 @@ begin
                 damage_p2 <= '0';
             end if;
         end if;
-    
+        
+        --------------------------------------
+        -- Enable sfx
+        
+        if (damage_p1 = '1' OR damage_p2 = '1') then
+            sfx_sel <= "11";
+            sfx_en <= '1';
+        elsif (en_pickup = '1') then
+            sfx_sel <= "00";
+            sfx_en <= '1';
+            en_pickup <= '0';
+        elsif (en_use = '1') then
+            sfx_sel <= "10";
+            sfx_en <= '1';
+            en_use <= '0';
+        elsif ( lazer_tick = '1' ) then
+            sfx_sel <= "01";
+            sfx_en <= '1';     
+        else
+            sfx_en <= '0';
+        end if;
         
     end if;
 end process;
